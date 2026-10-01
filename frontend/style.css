@@ -1,0 +1,782 @@
+/* ==========================================================================
+   SLOTIX – Smart Parking System
+   Dark Production Theme matching IoT Hardware & Live Cloud Telemetry
+   ========================================================================== */
+
+:root {
+  --bg-page: #0a101d;
+  --bg-container: #0d172c;
+  --bg-card: #111e37;
+  --bg-blueprint: #08101f;
+  --border-subtle: #17243e;
+  --border-card: #192b4d;
+  --border-dashed: #1c3358;
+  
+  --color-brand-blue: #00a2ff;
+  --color-brand-blue-grad: linear-gradient(135deg, #0099ff 0%, #00d2ff 100%);
+  
+  --color-green: #00e5a3;
+  --color-green-glow: rgba(0, 229, 163, 0.4);
+  --color-green-bg: #071c22;
+  --color-green-border: #0d705c;
+  --color-green-pill-bg: #06372b;
+  --color-green-pill-border: #0d6b54;
+  
+  --color-red: #ff4757;
+  --color-red-glow: rgba(255, 71, 87, 0.4);
+  --color-red-bg: #200c12;
+  --color-red-border: #c53030;
+  --color-red-pill-bg: #371219;
+  --color-red-pill-border: #771d28;
+
+  --color-amber: #f59e0b;
+  --color-blue-badge: #4e8fff;
+  --color-blue-badge-bg: #0f1c34;
+  --color-blue-badge-border: #1a345e;
+
+  --text-white: #ffffff;
+  --text-main: #e2e8f0;
+  --text-muted: #6b88b0;
+  --text-dim: #516d91;
+
+  --font-main: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Reset & Box Sizing */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  padding: 24px 16px;
+  background-color: var(--bg-page);
+  color: var(--text-white);
+  font-family: var(--font-main);
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-x: hidden;
+}
+
+.dashboard-wrapper {
+  width: 100%;
+  max-width: 580px;
+  margin: 0 auto;
+}
+
+.slotix-container {
+  background: var(--bg-container);
+  border: 1px solid var(--border-card);
+  border-radius: 20px;
+  padding: 20px 22px 24px 22px;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.55);
+}
+
+/* ==========================================================================
+   Top App Bar Header
+   ========================================================================== */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--color-brand-blue-grad);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-main);
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 153, 255, 0.35);
+  user-select: none;
+}
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  line-height: 1.15;
+}
+
+.brand-subtitle {
+  margin: 3px 0 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6282a5;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-btn-square {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #16233d;
+  border: 1px solid #20355a;
+  color: #7f9ec2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-btn-square:hover {
+  background: #1f3357;
+  color: #ffffff;
+  border-color: #2f4e80;
+}
+
+/* ==========================================================================
+   Realtime Status Ribbon
+   ========================================================================== */
+.system-status-ribbon {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-indicator-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-pulse-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-green);
+  box-shadow: 0 0 10px var(--color-green);
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+.status-pulse-dot.offline {
+  background: var(--color-red);
+  box-shadow: 0 0 10px var(--color-red);
+  animation: none;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.15); }
+}
+
+.status-text {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 11.5px;
+  color: var(--color-green);
+  letter-spacing: 0.8px;
+}
+
+.status-text.offline {
+  color: var(--color-red);
+}
+
+.status-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sensor-sync-label {
+  font-size: 11.5px;
+  color: #557297;
+  font-weight: 500;
+}
+
+.heartbeat-badge {
+  background: var(--color-blue-badge-bg);
+  border: 1px solid var(--color-blue-badge-border);
+  color: var(--color-blue-badge);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 12px;
+  border-radius: 999px;
+}
+
+.heartbeat-badge.online {
+  background: var(--color-green-pill-bg);
+  border-color: var(--color-green-pill-border);
+  color: var(--color-green);
+}
+
+.ribbon-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 14px 0 16px 0;
+}
+
+/* ==========================================================================
+   KPI Metrics Grid (3 Cards)
+   ========================================================================== */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 88px;
+}
+
+.metric-card.metric-available {
+  border-top: 2px solid var(--color-green);
+}
+
+.metric-card.metric-occupied {
+  border-top: 2px solid var(--color-red);
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.metric-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+}
+
+.metric-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  background: #182846;
+  color: var(--text-muted);
+}
+
+.metric-icon-box.green {
+  background: var(--color-green-pill-bg);
+  color: var(--color-green);
+}
+
+.metric-icon-box.red {
+  background: var(--color-red-pill-bg);
+  color: var(--color-red);
+}
+
+.metric-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 2px 0;
+}
+
+.metric-number {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.text-green {
+  color: var(--color-green) !important;
+}
+
+.text-red {
+  color: var(--color-red) !important;
+}
+
+.metric-unit {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.metric-footer {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+/* ==========================================================================
+   Parking Area Layout Section
+   ========================================================================== */
+.parking-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 18px;
+  padding: 18px;
+  margin-top: 16px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.2px;
+}
+
+.section-subtitle {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #5d7c9f;
+  margin-top: 2px;
+}
+
+.layout-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #8da6c7;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-dot.green {
+  background: var(--color-green);
+  box-shadow: 0 0 6px var(--color-green);
+}
+
+.legend-dot.red {
+  background: var(--color-red);
+  box-shadow: 0 0 6px var(--color-red);
+}
+
+/* Inner Blueprint Dashed Box */
+.parking-lot-blueprint {
+  background: var(--bg-blueprint);
+  border: 1.5px dashed var(--border-dashed);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.lane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 2px 4px;
+}
+
+.lane-mark {
+  color: var(--color-amber);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.arrow-up {
+  font-size: 13px;
+}
+
+.lot-status-pill {
+  background: var(--color-green-pill-bg);
+  border: 1px solid var(--color-green-pill-border);
+  color: var(--color-green);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+}
+
+.lot-status-pill.full {
+  background: var(--color-red-pill-bg);
+  border-color: var(--color-red-pill-border);
+  color: var(--color-red);
+}
+
+/* 2x2 Bay Grid */
+.parking-bays-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.parking-bay {
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+  min-height: 184px;
+}
+
+.parking-bay:hover {
+  transform: translateY(-2px);
+}
+
+/* Available Bay */
+.parking-bay.available {
+  background: var(--color-green-bg);
+  border: 1.5px solid var(--color-green-border);
+}
+
+.parking-bay.available:hover {
+  box-shadow: 0 0 16px rgba(0, 229, 163, 0.25);
+}
+
+/* Occupied Bay */
+.parking-bay.occupied {
+  background: var(--color-red-bg);
+  border: 1.5px solid var(--color-red-border);
+}
+
+.parking-bay.occupied:hover {
+  box-shadow: 0 0 16px rgba(255, 71, 87, 0.25);
+}
+
+/* Bay Header */
+.bay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bay-code {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.4px;
+}
+
+.bay-sensor-badge {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.parking-bay.available .bay-sensor-badge {
+  background: var(--color-green-pill-bg);
+  color: var(--color-green);
+  border: 1px solid var(--color-green-pill-border);
+}
+
+.parking-bay.occupied .bay-sensor-badge {
+  background: var(--color-red-pill-bg);
+  color: var(--color-red);
+  border: 1px solid var(--color-red-pill-border);
+}
+
+/* Bay Center Visual */
+.bay-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0 8px 0;
+}
+
+.p-symbol-ring {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.parking-bay.available .p-symbol-ring {
+  border: 2px dashed #00d29d;
+}
+
+.parking-bay.occupied .p-symbol-ring {
+  border: 2px dashed #ff4757;
+}
+
+.p-symbol {
+  font-family: var(--font-main);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.parking-bay.available .p-symbol {
+  color: #00d29d;
+}
+
+.parking-bay.occupied .p-symbol {
+  color: #ff4757;
+}
+
+.bay-status-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  margin-top: 8px;
+}
+
+.parking-bay.available .bay-status-label {
+  color: #00d29d;
+}
+
+.parking-bay.occupied .bay-status-label {
+  color: #ff4757;
+}
+
+/* Bay Footer Tag */
+.bay-footer {
+  margin-top: 10px;
+}
+
+.bay-state-tag {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 6px 0;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  box-sizing: border-box;
+}
+
+.parking-bay.available .bay-state-tag {
+  border: 1.5px solid var(--color-green-border);
+  color: #00d29d;
+  background: rgba(0, 210, 157, 0.05);
+}
+
+.parking-bay.occupied .bay-state-tag {
+  border: 1.5px solid var(--color-red-border);
+  color: #ff4757;
+  background: rgba(255, 71, 87, 0.08);
+}
+
+/* ==========================================================================
+   Footer Cloud Sync Info
+   ========================================================================== */
+.dashboard-footer-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding: 0 4px;
+}
+
+.rate-tag {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.refresh-pill-btn {
+  background: #16233d;
+  border: 1px solid #20355a;
+  color: #7f9ec2;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refresh-pill-btn:hover {
+  background: #1f3357;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   Settings Modal Dialog
+   ========================================================================== */
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+}
+
+.modal-backdrop.hidden {
+  display: none;
+}
+
+.modal-sheet {
+  background: #101c36;
+  border: 1px solid #1f355c;
+  border-radius: 18px;
+  max-width: 440px;
+  width: 100%;
+  padding: 22px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.modal-close-btn {
+  background: #182846;
+  border: 1px solid #233a62;
+  color: #8da6c7;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.setting-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #8da6c7;
+}
+
+.dark-input {
+  background: #09101f;
+  border: 1px solid #1e3358;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #ffffff;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.dark-input:focus {
+  border-color: #0099ff;
+}
+
+.setting-hint {
+  font-size: 10.5px;
+  color: #557297;
+}
+
+.modal-action-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #0088ff, #00b4d8);
+  border: none;
+  border-radius: 10px;
+  color: #ffffff;
+  padding: 11px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: opacity 0.2s;
+}
+
+.modal-action-btn:hover {
+  opacity: 0.92;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  body {
+    padding: 8px;
+  }
+  .slotix-container {
+    padding: 14px 14px 18px 14px;
+  }
+  .metrics-grid {
+    gap: 8px;
+  }
+  .metric-card {
+    padding: 10px;
+  }
+  .metric-number {
+    font-size: 26px;
+  }
+}

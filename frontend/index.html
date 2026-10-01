@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0f1d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SLOTIX">
+  <meta name="description" content="SLOTIX - Smart Real-Time Parking System with ESP8266 & Firebase Realtime Database">
+  <title>SLOTIX – SMART PARKING SYSTEM</title>
+  
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
+  
+  <!-- Modern Rounded Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css?v=7">
+
+  <!-- Firebase Web SDK (v10 Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="firebase-config.js?v=7"></script>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <div class="slotix-container">
+      
+      <!-- Top App Bar Header -->
+      <header class="dashboard-header">
+        <div class="brand">
+          <div class="brand-avatar">P</div>
+          <div class="brand-info">
+            <h1 class="brand-title">SLOTIX</h1>
+            <p class="brand-subtitle">SMART PARKING SYSTEM</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button id="soundToggleBtn" class="icon-btn-square" title="Toggle audio chime" aria-label="Toggle sound">
+            <svg id="soundIconOn" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+            <svg id="soundIconOff" class="hidden" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <line x1="23" y1="9" x2="17" y2="15"></line>
+              <line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+          </button>
+          
+          <button id="settingsBtn" class="icon-btn-square" title="Firebase Configuration" aria-label="Settings">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1 2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Realtime Status Ribbon -->
+      <div class="system-status-ribbon">
+        <div class="status-indicator-group">
+          <span class="status-pulse-dot" id="systemPulse"></span>
+          <span class="status-text" id="systemStatusLabel">FIREBASE CLOUD LIVE</span>
+        </div>
+        <div class="status-meta">
+          <span class="sensor-sync-label" id="lastUpdatedLabel">Sync: 4374s ago</span>
+          <span class="heartbeat-badge" id="heartbeatBadge">ESP8266: Standby</span>
+        </div>
+      </div>
+
+      <div class="ribbon-divider"></div>
+
+      <!-- KPI Metrics Cards (3 Cards) -->
+      <section class="metrics-grid">
+        <!-- Card 1: Total Slots -->
+        <div class="metric-card metric-total">
+          <div class="metric-header">
+            <span class="metric-title">TOTAL SLOTS</span>
+            <span class="metric-icon-box">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+              </svg>
+            </span>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-number" id="metricTotal">4</span>
+            <span class="metric-unit">Bays</span>
+          </div>
+          <div class="metric-footer">Zone A Capacity</div>
+        </div>
+
+        <!-- Card 2: Available -->
+        <div class="metric-card metric-available">
+          <div class="metric-header">
+            <span class="metric-title">AVAILABLE</span>
+            <span class="metric-icon-box green">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-number text-green" id="metricAvailable">4</span>
+            <span class="metric-unit text-green">Free</span>
+          </div>
+          <div class="metric-footer" id="metricAvailablePercent">100% Open Capacity</div>
+        </div>
+
+        <!-- Card 3: Occupied -->
+        <div class="metric-card metric-occupied">
+          <div class="metric-header">
+            <span class="metric-title">OCCUPIED</span>
+            <span class="metric-icon-box red">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </span>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-number text-red" id="metricOccupied">0</span>
+            <span class="metric-unit text-muted">In Use</span>
+          </div>
+          <div class="metric-footer" id="metricOccupiedPercent">0% Occupancy Rate</div>
+        </div>
+      </section>
+
+      <!-- Parking Area Layout Card -->
+      <section class="parking-section">
+        <div class="section-header">
+          <div class="section-title-wrap">
+            <h2 class="section-title">Parking Area Layout</h2>
+            <span class="section-subtitle">Cloud Real-Time Bay Occupancy</span>
+          </div>
+          <div class="layout-legend">
+            <span class="legend-item"><span class="legend-dot green"></span>Available</span>
+            <span class="legend-item"><span class="legend-dot red"></span>Occupied</span>
+          </div>
+        </div>
+
+        <div class="parking-lot-blueprint">
+          <div class="lane-header">
+            <div class="lane-mark">
+              <span class="arrow-up">⬆</span> DRIVE AISLE &amp; ENTRY LANE
+            </div>
+            <div class="lot-status-pill" id="lotStatusPill">4 SPACES OPEN</div>
+          </div>
+
+          <!-- 4-Slot Grid (2x2) -->
+          <div class="parking-bays-grid">
+            <!-- S01 -->
+            <div class="parking-bay available" id="bay-S01" data-slot="S01" title="Click to test toggle slot state">
+              <div class="bay-header">
+                <span class="bay-code">S01</span>
+                <span class="bay-sensor-badge" id="baySensor-S01">IR-01 (D1)</span>
+              </div>
+              <div class="bay-visual">
+                <div class="p-symbol-ring">
+                  <span class="p-symbol">P</span>
+                </div>
+                <span class="bay-status-label" id="bayVisualLabel-S01">VACANT</span>
+              </div>
+              <div class="bay-footer">
+                <span class="bay-state-tag" id="bayTag-S01">AVAILABLE</span>
+              </div>
+            </div>
+
+            <!-- S02 -->
+            <div class="parking-bay available" id="bay-S02" data-slot="S02" title="Click to test toggle slot state">
+              <div class="bay-header">
+                <span class="bay-code">S02</span>
+                <span class="bay-sensor-badge" id="baySensor-S02">IR-02 (D2)</span>
+              </div>
+              <div class="bay-visual">
+                <div class="p-symbol-ring">
+                  <span class="p-symbol">P</span>
+                </div>
+                <span class="bay-status-label" id="bayVisualLabel-S02">VACANT</span>
+              </div>
+              <div class="bay-footer">
+                <span class="bay-state-tag" id="bayTag-S02">AVAILABLE</span>
+              </div>
+            </div>
+
+            <!-- S03 -->
+            <div class="parking-bay available" id="bay-S03" data-slot="S03" title="Click to test toggle slot state">
+              <div class="bay-header">
+                <span class="bay-code">S03</span>
+                <span class="bay-sensor-badge" id="baySensor-S03">IR-03 (D5)</span>
+              </div>
+              <div class="bay-visual">
+                <div class="p-symbol-ring">
+                  <span class="p-symbol">P</span>
+                </div>
+                <span class="bay-status-label" id="bayVisualLabel-S03">VACANT</span>
+              </div>
+              <div class="bay-footer">
+                <span class="bay-state-tag" id="bayTag-S03">AVAILABLE</span>
+              </div>
+            </div>
+
+            <!-- S04 -->
+            <div class="parking-bay available" id="bay-S04" data-slot="S04" title="Click to test toggle slot state">
+              <div class="bay-header">
+                <span class="bay-code">S04</span>
+                <span class="bay-sensor-badge" id="baySensor-S04">IR-04 (D6)</span>
+              </div>
+              <div class="bay-visual">
+                <div class="p-symbol-ring">
+                  <span class="p-symbol">P</span>
+                </div>
+                <span class="bay-status-label" id="bayVisualLabel-S04">VACANT</span>
+              </div>
+              <div class="bay-footer">
+                <span class="bay-state-tag" id="bayTag-S04">AVAILABLE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Quick Sync and Status info -->
+      <footer class="dashboard-footer-info">
+        <span class="rate-tag" id="latencyTag">Firebase: Cloud Live</span>
+        <button id="manualRefreshBtn" class="refresh-pill-btn" title="Force Sync">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span>Sync Now</span>
+        </button>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- Settings & Firebase Setup Modal -->
+  <div id="settingsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 id="modalTitle" class="modal-title">Firebase &amp; Hardware Setup</h3>
+        <button id="closeModalBtn" class="modal-close-btn" aria-label="Close Settings">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="setting-item">
+          <label class="setting-label" for="cfgDatabaseUrl">Firebase Realtime Database URL</label>
+          <input type="url" id="cfgDatabaseUrl" class="dark-input" placeholder="https://your-project-default-rtdb.firebaseio.com">
+          <span class="setting-hint">Direct link from Firebase Console &rarr; Realtime Database.</span>
+        </div>
+
+        <div class="setting-item">
+          <label class="setting-label" for="cfgApiKey">Firebase Web API Key</label>
+          <input type="text" id="cfgApiKey" class="dark-input" placeholder="AIzaSy...">
+        </div>
+
+        <div class="setting-item">
+          <label class="setting-label" for="cfgProjectId">Firebase Project ID</label>
+          <input type="text" id="cfgProjectId" class="dark-input" placeholder="slotix-a779f">
+        </div>
+
+        <button id="saveFirebaseBtn" class="modal-action-btn">
+          Save &amp; Connect to Cloud
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=7"></script>
+</body>
+</html>

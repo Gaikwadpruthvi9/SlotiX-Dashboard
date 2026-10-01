@@ -241,12 +241,15 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // 6. Static file serving (PWA assets)
-  let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
+  // 6. Static file serving (PWA assets from frontend folder)
+  const frontendDir = fs.existsSync(path.join(__dirname, '..', 'frontend')) 
+    ? path.join(__dirname, '..', 'frontend') 
+    : __dirname;
+  let filePath = path.join(frontendDir, pathname === '/' ? 'index.html' : pathname);
 
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
-      filePath = path.join(__dirname, 'index.html');
+      filePath = path.join(frontendDir, 'index.html');
     }
 
     const ext = path.extname(filePath).toLowerCase();

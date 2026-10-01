@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="slotixGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5bc3e3"/>
+      <stop offset="100%" stop-color="#1b72e8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#slotixGrad)"/>
+  <!-- Modern 'P' Parking badge with sleek car profile -->
+  <path d="M170 120h105c58 0 95 32 95 85s-37 85-95 85h-45v102h-60V120zm60 116h40c26 0 42-12 42-31s-16-31-42-31h-40v62z" fill="#ffffff"/>
+  <circle cx="370" cy="380" r="32" fill="#10b981"/>
+</svg>

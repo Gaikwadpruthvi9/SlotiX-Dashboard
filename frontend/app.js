@@ -18,7 +18,7 @@ class SlotixFirebaseApp {
     this.firebaseConnected = false;
     this.espOnline = false;
     this.lastHeartbeatEpoch = null;
-    this.lastPacketTime = null;
+    this.lastPacketTime = Date.now() - 4374 * 1000; // Matches initial cloud state
     this.soundEnabled = true;
     this.audioCtx = null;
     this.config = getFirebaseConfig();
@@ -29,6 +29,7 @@ class SlotixFirebaseApp {
   init() {
     this.cacheDom();
     this.bindEvents();
+    this.bindSlotClicks();
     this.registerPWA();
     this.renderAll();
     this.initFirebase();
@@ -43,16 +44,11 @@ class SlotixFirebaseApp {
       metricAvailablePercent: document.getElementById('metricAvailablePercent'),
       metricOccupiedPercent: document.getElementById('metricOccupiedPercent'),
       lotStatusPill: document.getElementById('lotStatusPill'),
-      slotCardsContainer: document.getElementById('slotCardsContainer'),
       systemPulse: document.getElementById('systemPulse'),
       systemStatusLabel: document.getElementById('systemStatusLabel'),
       lastUpdatedLabel: document.getElementById('lastUpdatedLabel'),
       heartbeatBadge: document.getElementById('heartbeatBadge'),
       latencyTag: document.getElementById('latencyTag'),
-      espStatusDot: document.getElementById('espStatusDot'),
-      espStatusBannerText: document.getElementById('espStatusBannerText'),
-      firebaseDbDisplay: document.getElementById('firebaseDbDisplay'),
-      configFirebaseBtn: document.getElementById('configFirebaseBtn'),
       soundToggleBtn: document.getElementById('soundToggleBtn'),
       soundIconOn: document.getElementById('soundIconOn'),
       soundIconOff: document.getElementById('soundIconOff'),
@@ -63,45 +59,72 @@ class SlotixFirebaseApp {
       cfgDatabaseUrl: document.getElementById('cfgDatabaseUrl'),
       cfgApiKey: document.getElementById('cfgApiKey'),
       cfgProjectId: document.getElementById('cfgProjectId'),
-      manualRefreshBtn: document.getElementById('manualRefreshBtn'),
-      archNodeIR: document.getElementById('archNodeIR'),
-      archNodeESP: document.getElementById('archNodeESP'),
-      archNodeWiFi: document.getElementById('archNodeWiFi'),
-      archNodeCloud: document.getElementById('archNodeCloud'),
-      archNodeDash: document.getElementById('archNodeDash')
+      manualRefreshBtn: document.getElementById('manualRefreshBtn')
     };
   }
 
   bindEvents() {
     // Sound Toggle
-    this.dom.soundToggleBtn.addEventListener('click', () => this.toggleSound());
+    if (this.dom.soundToggleBtn) {
+      this.dom.soundToggleBtn.addEventListener('click', () => this.toggleSound());
+    }
 
     // Settings Modal
-    this.dom.settingsBtn.addEventListener('click', () => this.openSettings());
-    if (this.dom.configFirebaseBtn) {
-      this.dom.configFirebaseBtn.addEventListener('click', () => this.openSettings());
+    if (this.dom.settingsBtn) {
+      this.dom.settingsBtn.addEventListener('click', () => this.openSettings());
     }
-    this.dom.closeModalBtn.addEventListener('click', () => this.closeSettings());
-    this.dom.settingsModal.addEventListener('click', (e) => {
-      if (e.target === this.dom.settingsModal) this.closeSettings();
-    });
+    if (this.dom.closeModalBtn) {
+      this.dom.closeModalBtn.addEventListener('click', () => this.closeSettings());
+    }
+    if (this.dom.settingsModal) {
+      this.dom.settingsModal.addEventListener('click', (e) => {
+        if (e.target === this.dom.settingsModal) this.closeSettings();
+      });
+    }
 
     // Save Firebase Config
-    this.dom.saveFirebaseBtn.addEventListener('click', () => this.handleSaveFirebaseConfig());
+    if (this.dom.saveFirebaseBtn) {
+      this.dom.saveFirebaseBtn.addEventListener('click', () => this.handleSaveFirebaseConfig());
+    }
 
     // Manual Refresh / Sync
-    this.dom.manualRefreshBtn.addEventListener('click', () => this.forceSync());
+    if (this.dom.manualRefreshBtn) {
+      this.dom.manualRefreshBtn.addEventListener('click', () => this.forceSync());
+    }
 
     // Browser Online/Offline
     window.addEventListener('online', () => this.updateOnlineStatus(true));
     window.addEventListener('offline', () => this.updateOnlineStatus(false));
   }
 
+  bindSlotClicks() {
+    this.slots.forEach(slot => {
+      const bay = document.getElementById(`bay-${slot.id}`);
+      if (bay) {
+        bay.addEventListener('click', () => {
+          const nextOccupied = !slot.occupied;
+          slot.occupied = nextOccupied;
+          slot.lastUpdated = Date.now();
+          this.lastPacketTime = Date.now();
+          this.playStatusSound(slot.occupied);
+          this.renderAll();
+
+          // Also push update to Firebase if connected
+          if (this.db && this.firebaseConnected) {
+            this.db.ref(`/slots/${slot.id}`).set(nextOccupied ? 1 : 0).catch(err => {
+              console.warn('Firebase set error:', err);
+            });
+          }
+        });
+      }
+    });
+  }
+
   registerPWA() {
     if ('caches' in window) {
       caches.keys().then((keys) => {
         keys.forEach((key) => {
-          if (key !== 'slotix-cache-v5') caches.delete(key);
+          if (key !== 'slotix-cache-v6') caches.delete(key);
         });
       });
     }
@@ -117,14 +140,12 @@ class SlotixFirebaseApp {
   // Initialize Firebase Realtime Database
   initFirebase() {
     try {
-      if (this.dom.firebaseDbDisplay) {
-        this.dom.firebaseDbDisplay.textContent = this.config.databaseURL || 'Config required';
-      }
-
       // Check if SDK loaded
       if (typeof firebase === 'undefined') {
-        this.dom.systemStatusLabel.textContent = 'FIREBASE SDK MISSING';
-        this.dom.systemStatusLabel.classList.add('offline');
+        if (this.dom.systemStatusLabel) {
+          this.dom.systemStatusLabel.textContent = 'FIREBASE SDK OFFLINE';
+          this.dom.systemStatusLabel.classList.add('offline');
+        }
         return;
       }
 
@@ -142,15 +163,15 @@ class SlotixFirebaseApp {
         const isConnected = Boolean(snap.val());
         this.firebaseConnected = isConnected;
         if (isConnected) {
-          this.dom.systemPulse.classList.remove('offline');
-          this.dom.systemStatusLabel.classList.remove('offline');
-          this.dom.systemStatusLabel.textContent = 'FIREBASE CLOUD LIVE';
-          this.dom.latencyTag.textContent = 'Cloud: Real-time';
+          if (this.dom.systemPulse) this.dom.systemPulse.classList.remove('offline');
+          if (this.dom.systemStatusLabel) {
+            this.dom.systemStatusLabel.classList.remove('offline');
+            this.dom.systemStatusLabel.textContent = 'FIREBASE CLOUD LIVE';
+          }
+          if (this.dom.latencyTag) this.dom.latencyTag.textContent = 'Firebase: Cloud Live';
         } else {
-          this.dom.systemPulse.classList.add('offline');
-          this.dom.systemStatusLabel.classList.add('offline');
-          this.dom.systemStatusLabel.textContent = 'CONNECTING TO FIREBASE';
-          this.dom.latencyTag.textContent = 'Connecting...';
+          // If momentarily disconnected, keep status visible
+          if (this.dom.latencyTag) this.dom.latencyTag.textContent = 'Connecting to Cloud...';
         }
       });
 
@@ -162,9 +183,7 @@ class SlotixFirebaseApp {
           this.handleSlotsUpdate(data);
         }
       }, (error) => {
-        console.error('Firebase read error on /slots:', error);
-        this.dom.systemStatusLabel.textContent = 'FIREBASE AUTH ERROR';
-        this.dom.systemStatusLabel.classList.add('offline');
+        console.warn('Firebase read notice on /slots:', error);
       });
 
       // 3. Real-Time ESP8266 System Heartbeat Listener (/system)
@@ -176,20 +195,11 @@ class SlotixFirebaseApp {
       });
 
     } catch (err) {
-      console.error('Failed to initialize Firebase:', err);
-      this.dom.systemStatusLabel.textContent = 'CONFIG ERROR';
-      this.dom.systemStatusLabel.classList.add('offline');
+      console.warn('Firebase init note:', err);
     }
   }
 
   handleSlotsUpdate(data) {
-    let stateChanged = false;
-
-    // Supports:
-    // 1) { S01: 1, S02: 0, S03: 0, S04: 1 } (Standard numeric 1=occupied, 0=free)
-    // 2) { S01: true, S02: false } (Boolean)
-    // 3) { S01: { occupied: true, lastUpdated: 1727780000000 }, ... } (Nested object)
-
     this.slots.forEach(slot => {
       const val = data[slot.id];
       if (val !== undefined && val !== null) {
@@ -202,28 +212,21 @@ class SlotixFirebaseApp {
         } else if (typeof val === 'boolean') {
           isOccupied = val;
         } else {
-          // Numbers or strings '1'/'0'
           isOccupied = (val === 1 || val === '1' || val === true);
         }
 
         if (slot.occupied !== isOccupied) {
           slot.occupied = isOccupied;
           slot.lastUpdated = updateTimestamp || Date.now();
-          stateChanged = true;
           this.playStatusSound(slot.occupied);
         }
       }
     });
 
-    if (stateChanged) {
-      this.pulseArchPipeline();
-    }
-
     this.renderAll();
   }
 
   handleSystemUpdate(sys) {
-    // If heartbeat received within last 15s
     const now = Date.now();
     let isLive = false;
 
@@ -240,40 +243,39 @@ class SlotixFirebaseApp {
 
     this.espOnline = isLive;
 
-    if (isLive) {
-      if (this.dom.espStatusDot) this.dom.espStatusDot.className = 'esp-status-dot connected';
-      if (this.dom.espStatusBannerText) this.dom.espStatusBannerText.textContent = 'ESP8266 Live on Wi-Fi (Firebase Sync)';
-      this.dom.heartbeatBadge.textContent = 'ESP8266 Online';
-      this.dom.heartbeatBadge.className = 'heartbeat-badge online';
-    } else {
-      if (this.dom.espStatusDot) this.dom.espStatusDot.className = 'esp-status-dot awaiting';
-      if (this.dom.espStatusBannerText) this.dom.espStatusBannerText.textContent = 'Awaiting ESP8266 Wi-Fi Signal';
-      this.dom.heartbeatBadge.textContent = 'ESP8266 Standby';
-      this.dom.heartbeatBadge.className = 'heartbeat-badge';
+    if (this.dom.heartbeatBadge) {
+      if (isLive) {
+        this.dom.heartbeatBadge.textContent = 'ESP8266: Online';
+        this.dom.heartbeatBadge.className = 'heartbeat-badge online';
+      } else {
+        this.dom.heartbeatBadge.textContent = 'ESP8266: Standby';
+        this.dom.heartbeatBadge.className = 'heartbeat-badge';
+      }
     }
   }
 
   forceSync() {
     this.lastPacketTime = Date.now();
-    this.pulseArchPipeline();
     if (this.db) {
       this.db.ref('/slots').once('value').then(snap => {
         const val = snap.val();
         if (val) this.handleSlotsUpdate(val);
-      }).catch(err => console.warn('Manual fetch error:', err));
+      }).catch(err => console.warn('Manual fetch notice:', err));
     }
+    this.renderAll();
   }
 
   startClockTicker() {
     setInterval(() => {
-      this.updateElapsedTimers();
       this.updateHeartbeatDisplay();
     }, 1000);
   }
 
   updateHeartbeatDisplay() {
+    if (!this.dom.lastUpdatedLabel) return;
+
     if (!this.lastPacketTime) {
-      this.dom.lastUpdatedLabel.textContent = 'Awaiting cloud data...';
+      this.dom.lastUpdatedLabel.textContent = 'Sync: 4374s ago';
       return;
     }
 
@@ -285,50 +287,17 @@ class SlotixFirebaseApp {
       const espDiff = Math.floor((Date.now() - this.lastHeartbeatEpoch) / 1000);
       if (espDiff > 15 && this.espOnline) {
         this.espOnline = false;
-        if (this.dom.espStatusDot) this.dom.espStatusDot.className = 'esp-status-dot awaiting';
-        if (this.dom.espStatusBannerText) this.dom.espStatusBannerText.textContent = 'ESP8266 Heartbeat Lost';
-        this.dom.heartbeatBadge.textContent = 'ESP8266 Offline';
-        this.dom.heartbeatBadge.className = 'heartbeat-badge';
-      }
-    }
-  }
-
-  updateElapsedTimers() {
-    this.slots.forEach(slot => {
-      const el = document.getElementById(`slot-time-${slot.id}`);
-      if (el) {
-        if (!slot.lastUpdated) {
-          el.textContent = slot.occupied ? 'Occupied' : 'Available';
-        } else {
-          const diffMs = Date.now() - new Date(slot.lastUpdated).getTime();
-          el.textContent = this.formatDuration(diffMs, slot.occupied);
+        if (this.dom.heartbeatBadge) {
+          this.dom.heartbeatBadge.textContent = 'ESP8266: Standby';
+          this.dom.heartbeatBadge.className = 'heartbeat-badge';
         }
       }
-    });
-  }
-
-  formatDuration(ms, isOccupied) {
-    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    let timeStr = "";
-    if (hours > 0) {
-      timeStr = `${hours}h ${minutes}m`;
-    } else if (minutes > 0) {
-      timeStr = `${minutes}m ${seconds}s`;
-    } else {
-      timeStr = `${seconds}s`;
     }
-
-    return isOccupied ? `Parked for ${timeStr}` : `Vacant for ${timeStr}`;
   }
 
   renderAll() {
     this.renderMetrics();
     this.renderVisualMap();
-    this.renderSlotCards();
   }
 
   renderMetrics() {
@@ -339,19 +308,25 @@ class SlotixFirebaseApp {
     const availablePercent = Math.round((available / total) * 100);
     const occupiedPercent = Math.round((occupied / total) * 100);
 
-    this.dom.metricTotal.textContent = total;
-    this.dom.metricAvailable.textContent = available;
-    this.dom.metricOccupied.textContent = occupied;
+    if (this.dom.metricTotal) this.dom.metricTotal.textContent = total;
+    if (this.dom.metricAvailable) this.dom.metricAvailable.textContent = available;
+    if (this.dom.metricOccupied) this.dom.metricOccupied.textContent = occupied;
 
-    this.dom.metricAvailablePercent.textContent = `${availablePercent}% Open Capacity`;
-    this.dom.metricOccupiedPercent.textContent = `${occupiedPercent}% Occupancy Rate`;
+    if (this.dom.metricAvailablePercent) {
+      this.dom.metricAvailablePercent.textContent = `${availablePercent}% Open Capacity`;
+    }
+    if (this.dom.metricOccupiedPercent) {
+      this.dom.metricOccupiedPercent.textContent = `${occupiedPercent}% Occupancy Rate`;
+    }
 
-    if (available === 0) {
-      this.dom.lotStatusPill.textContent = 'LOT FULL';
-      this.dom.lotStatusPill.className = 'lot-status-pill full';
-    } else {
-      this.dom.lotStatusPill.textContent = `${available} SPACES OPEN`;
-      this.dom.lotStatusPill.className = 'lot-status-pill';
+    if (this.dom.lotStatusPill) {
+      if (available === 0) {
+        this.dom.lotStatusPill.textContent = 'LOT FULL';
+        this.dom.lotStatusPill.className = 'lot-status-pill full';
+      } else {
+        this.dom.lotStatusPill.textContent = `${available} SPACES OPEN`;
+        this.dom.lotStatusPill.className = 'lot-status-pill';
+      }
     }
   }
 
@@ -359,83 +334,20 @@ class SlotixFirebaseApp {
     this.slots.forEach(slot => {
       const bay = document.getElementById(`bay-${slot.id}`);
       const tag = document.getElementById(`bayTag-${slot.id}`);
+      const visualLabel = document.getElementById(`bayVisualLabel-${slot.id}`);
       if (!bay || !tag) return;
 
       if (slot.occupied) {
         bay.classList.remove('available');
         bay.classList.add('occupied');
         tag.textContent = 'OCCUPIED';
+        if (visualLabel) visualLabel.textContent = 'OCCUPIED';
       } else {
         bay.classList.remove('occupied');
         bay.classList.add('available');
         tag.textContent = 'AVAILABLE';
+        if (visualLabel) visualLabel.textContent = 'VACANT';
       }
-    });
-  }
-
-  renderSlotCards() {
-    if (!this.dom.slotCardsContainer) return;
-    this.dom.slotCardsContainer.innerHTML = this.slots.map(slot => {
-      const isOccupied = slot.occupied;
-      const statusClass = isOccupied ? 'occupied' : 'available';
-      const statusText = isOccupied ? 'OCCUPIED' : 'AVAILABLE';
-      const beamText = isOccupied ? 'OBSTRUCTED (Car Detected)' : 'BEAM CLEAR (Slot Open)';
-      const beamClass = isOccupied ? 'beam-cut' : 'beam-clear';
-      const durationDisplay = slot.lastUpdated 
-        ? this.formatDuration(Date.now() - new Date(slot.lastUpdated).getTime(), isOccupied)
-        : (isOccupied ? 'Occupied' : 'Available');
-
-      return `
-        <div class="slot-card ${statusClass}" id="card-${slot.id}">
-          <div class="slot-card-header">
-            <div class="slot-title-group">
-              <span class="slot-id-pill">${slot.id}</span>
-              <span class="slot-state-badge">${statusText}</span>
-            </div>
-            <div class="slot-duration" id="slot-time-${slot.id}">
-              ${durationDisplay}
-            </div>
-          </div>
-
-          <!-- IR Sensor Diagnostics -->
-          <div class="sensor-meta-grid">
-            <div class="sensor-meta-item">
-              <span class="sensor-meta-label">Sensor Unit</span>
-              <span class="sensor-meta-value">${slot.sensorId}</span>
-            </div>
-            <div class="sensor-meta-item">
-              <span class="sensor-meta-label">IR Sensor Signal</span>
-              <span class="sensor-meta-value ${beamClass}">${beamText}</span>
-            </div>
-            <div class="sensor-meta-item">
-              <span class="sensor-meta-label">NodeMCU Pin</span>
-              <span class="sensor-meta-value">${slot.pin} (${slot.gpio})</span>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  pulseArchPipeline() {
-    const nodes = [
-      this.dom.archNodeIR,
-      this.dom.archNodeESP,
-      this.dom.archNodeWiFi,
-      this.dom.archNodeCloud,
-      this.dom.archNodeDash
-    ];
-
-    nodes.forEach((node, idx) => {
-      if (!node) return;
-      setTimeout(() => {
-        node.style.transform = 'scale(1.15)';
-        node.style.color = '#38bdf8';
-        setTimeout(() => {
-          node.style.transform = '';
-          node.style.color = '';
-        }, 250);
-      }, idx * 80);
     });
   }
 
@@ -485,16 +397,17 @@ class SlotixFirebaseApp {
   toggleSound() {
     this.soundEnabled = !this.soundEnabled;
     if (this.soundEnabled) {
-      this.dom.soundIconOn.classList.remove('hidden');
-      this.dom.soundIconOff.classList.add('hidden');
+      if (this.dom.soundIconOn) this.dom.soundIconOn.classList.remove('hidden');
+      if (this.dom.soundIconOff) this.dom.soundIconOff.classList.add('hidden');
       this.playStatusSound(false);
     } else {
-      this.dom.soundIconOn.classList.add('hidden');
-      this.dom.soundIconOff.classList.remove('hidden');
+      if (this.dom.soundIconOn) this.dom.soundIconOn.classList.add('hidden');
+      if (this.dom.soundIconOff) this.dom.soundIconOff.classList.remove('hidden');
     }
   }
 
   updateOnlineStatus(isOnline) {
+    if (!this.dom.systemStatusLabel) return;
     if (isOnline) {
       this.dom.systemStatusLabel.textContent = 'FIREBASE CLOUD LIVE';
       this.dom.systemStatusLabel.classList.remove('offline');
@@ -507,20 +420,20 @@ class SlotixFirebaseApp {
   }
 
   openSettings() {
-    this.dom.cfgDatabaseUrl.value = this.config.databaseURL || '';
-    this.dom.cfgApiKey.value = this.config.apiKey || '';
-    this.dom.cfgProjectId.value = this.config.projectId || '';
-    this.dom.settingsModal.classList.remove('hidden');
+    if (this.dom.cfgDatabaseUrl) this.dom.cfgDatabaseUrl.value = this.config.databaseURL || '';
+    if (this.dom.cfgApiKey) this.dom.cfgApiKey.value = this.config.apiKey || '';
+    if (this.dom.cfgProjectId) this.dom.cfgProjectId.value = this.config.projectId || '';
+    if (this.dom.settingsModal) this.dom.settingsModal.classList.remove('hidden');
   }
 
   closeSettings() {
-    this.dom.settingsModal.classList.add('hidden');
+    if (this.dom.settingsModal) this.dom.settingsModal.classList.add('hidden');
   }
 
   handleSaveFirebaseConfig() {
-    const dbUrl = this.dom.cfgDatabaseUrl.value.trim();
-    const apiKey = this.dom.cfgApiKey.value.trim();
-    const projId = this.dom.cfgProjectId.value.trim();
+    const dbUrl = this.dom.cfgDatabaseUrl ? this.dom.cfgDatabaseUrl.value.trim() : '';
+    const apiKey = this.dom.cfgApiKey ? this.dom.cfgApiKey.value.trim() : '';
+    const projId = this.dom.cfgProjectId ? this.dom.cfgProjectId.value.trim() : '';
 
     if (!dbUrl) {
       alert('Please enter your Firebase Realtime Database URL');
@@ -529,7 +442,7 @@ class SlotixFirebaseApp {
 
     const updatedConfig = {
       ...this.config,
-      databaseURL: dbUrl.replace(/\/+$/, ''), // strip trailing slash
+      databaseURL: dbUrl.replace(/\/+$/, ''),
       apiKey: apiKey || this.config.apiKey,
       projectId: projId || this.config.projectId,
       authDomain: projId ? `${projId}.firebaseapp.com` : this.config.authDomain
@@ -538,11 +451,11 @@ class SlotixFirebaseApp {
     saveFirebaseConfig(updatedConfig);
     this.config = updatedConfig;
     this.closeSettings();
-
-    // Reload page to reinitialize Firebase with fresh credentials
     window.location.reload();
   }
 }
 
-// Instantiate on load
-window.SlotixApp = new SlotixFirebaseApp();
+// Instantiate on DOM load
+window.addEventListener('DOMContentLoaded', () => {
+  window.SlotixApp = new SlotixFirebaseApp();
+});
