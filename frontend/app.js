@@ -101,6 +101,14 @@ class SlotixFirebaseApp {
       this.dom.manualRefreshBtn.addEventListener('click', () => this.forceSync());
     }
 
+    // Logout
+    const logoutLink = document.getElementById('logoutLink');
+    if (logoutLink) {
+      logoutLink.addEventListener('click', () => {
+        localStorage.removeItem('slotix_logged_in');
+      });
+    }
+
     // Browser Online/Offline
     window.addEventListener('online', () => this.updateOnlineStatus(true));
     window.addEventListener('offline', () => this.updateOnlineStatus(false));
