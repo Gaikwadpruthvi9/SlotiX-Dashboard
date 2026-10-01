@@ -22,12 +22,14 @@ class SlotixFirebaseApp {
     this.soundEnabled = true;
     this.audioCtx = null;
     this.config = getFirebaseConfig();
+    this.theme = localStorage.getItem('slotix_theme') || 'dark';
 
     this.init();
   }
 
   init() {
     this.cacheDom();
+    this.applyTheme(this.theme);
     this.bindEvents();
     this.registerPWA();
     this.renderAll();
@@ -48,6 +50,9 @@ class SlotixFirebaseApp {
       lastUpdatedLabel: document.getElementById('lastUpdatedLabel'),
       heartbeatBadge: document.getElementById('heartbeatBadge'),
       latencyTag: document.getElementById('latencyTag'),
+      themeToggleBtn: document.getElementById('themeToggleBtn'),
+      themeIconSun: document.getElementById('themeIconSun'),
+      themeIconMoon: document.getElementById('themeIconMoon'),
       soundToggleBtn: document.getElementById('soundToggleBtn'),
       soundIconOn: document.getElementById('soundIconOn'),
       soundIconOff: document.getElementById('soundIconOff'),
@@ -63,6 +68,11 @@ class SlotixFirebaseApp {
   }
 
   bindEvents() {
+    // Theme Toggle (Light / Dark Mode)
+    if (this.dom.themeToggleBtn) {
+      this.dom.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
+    }
+
     // Sound Toggle
     if (this.dom.soundToggleBtn) {
       this.dom.soundToggleBtn.addEventListener('click', () => this.toggleSound());
@@ -381,6 +391,28 @@ class SlotixFirebaseApp {
       }
     } catch (e) {
       // Audio context policy
+    }
+  }
+
+  toggleTheme() {
+    this.theme = this.theme === 'dark' ? 'light' : 'dark';
+    try {
+      localStorage.setItem('slotix_theme', this.theme);
+    } catch (e) {}
+    this.applyTheme(this.theme);
+  }
+
+  applyTheme(theme) {
+    if (theme === 'light') {
+      document.body.classList.add('light-mode');
+      if (this.dom.themeIconSun) this.dom.themeIconSun.classList.add('hidden');
+      if (this.dom.themeIconMoon) this.dom.themeIconMoon.classList.remove('hidden');
+      if (this.dom.themeToggleBtn) this.dom.themeToggleBtn.title = 'Switch to Dark Mode';
+    } else {
+      document.body.classList.remove('light-mode');
+      if (this.dom.themeIconSun) this.dom.themeIconSun.classList.remove('hidden');
+      if (this.dom.themeIconMoon) this.dom.themeIconMoon.classList.add('hidden');
+      if (this.dom.themeToggleBtn) this.dom.themeToggleBtn.title = 'Switch to Light Mode';
     }
   }
 

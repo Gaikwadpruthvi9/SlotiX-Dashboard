@@ -62,12 +62,17 @@ body {
   align-items: flex-start;
   justify-content: center;
   overflow-x: hidden;
+  transition: background-color 0.28s ease, color 0.28s ease;
 }
 
 .dashboard-wrapper {
   width: 100%;
   max-width: 580px;
   margin: 0 auto;
+}
+
+.slotix-container, .metric-card, .parking-section, .parking-lot-blueprint, .parking-bay, .icon-btn-square, .modal-sheet {
+  transition: background-color 0.28s ease, border-color 0.28s ease, color 0.28s ease, box-shadow 0.28s ease;
 }
 
 .slotix-container {
@@ -767,4 +772,131 @@ body {
   .metric-number {
     font-size: 26px;
   }
+}
+
+/* ==========================================================================
+   Light Mode Theme
+   ========================================================================== */
+body.light-mode {
+  --bg-page: #f0f4f9;
+  --bg-container: #ffffff;
+  --bg-card: #f8fafc;
+  --bg-blueprint: #f1f5f9;
+  --border-subtle: #e2e8f0;
+  --border-card: #e2e8f0;
+  --border-dashed: #cbd5e1;
+
+  --color-green: #059669;
+  --color-green-glow: rgba(5, 150, 105, 0.25);
+  --color-green-bg: #f0fdf4;
+  --color-green-border: #10b981;
+  --color-green-pill-bg: #dcfce7;
+  --color-green-pill-border: #86efac;
+
+  --color-red: #dc2626;
+  --color-red-glow: rgba(220, 38, 38, 0.25);
+  --color-red-bg: #fef2f2;
+  --color-red-border: #ef4444;
+  --color-red-pill-bg: #fee2e2;
+  --color-red-pill-border: #fca5a5;
+
+  --color-amber: #d97706;
+  --color-blue-badge: #2563eb;
+  --color-blue-badge-bg: #eff6ff;
+  --color-blue-badge-border: #bfdbfe;
+
+  --text-white: #0f172a;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+}
+
+body.light-mode .slotix-container {
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .icon-btn-square {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+body.light-mode .icon-btn-square:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+body.light-mode .metric-icon-box {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+body.light-mode .metric-number {
+  color: #0f172a;
+}
+
+body.light-mode .bay-code {
+  color: #0f172a;
+}
+
+body.light-mode .section-title {
+  color: #0f172a;
+}
+
+body.light-mode .brand-title {
+  color: #0f172a;
+}
+
+body.light-mode .brand-subtitle {
+  color: #64748b;
+}
+
+body.light-mode .section-subtitle {
+  color: #64748b;
+}
+
+body.light-mode .sensor-sync-label {
+  color: #64748b;
+}
+
+body.light-mode .legend-item {
+  color: #64748b;
+}
+
+body.light-mode .refresh-pill-btn {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+body.light-mode .refresh-pill-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+body.light-mode .modal-sheet {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+}
+
+body.light-mode .modal-title {
+  color: #0f172a;
+}
+
+body.light-mode .dark-input {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+body.light-mode .dark-input:focus {
+  border-color: #0099ff;
+}
+
+body.light-mode .modal-close-btn {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
 }
