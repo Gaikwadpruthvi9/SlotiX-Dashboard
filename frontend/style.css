@@ -757,27 +757,52 @@ body {
 
 /* ==========================================================================
    Mobile Responsiveness (320px – 430px Screens)
-   Optimized for iPhone SE, 12/13/14/15/16, Galaxy S-series, Pixel
-   Removes unnecessary padding and eliminates bottom empty space
+   Edge-to-Edge Native Mobile Feel with Zero Bottom Void / Gap
    ========================================================================== */
 @media (max-width: 480px) {
+  html, body {
+    height: 100%;
+    min-height: 100dvh;
+  }
+
   body {
-    padding: 8px 6px 14px 6px;
-    min-height: auto;
+    padding: 0;
+    margin: 0;
+    min-height: 100dvh;
+    background-color: var(--bg-container);
     align-items: stretch;
+    justify-content: flex-start;
   }
 
   .dashboard-wrapper {
     max-width: 100%;
+    width: 100%;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
 
   .slotix-container {
-    padding: 14px 12px 14px 12px;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    width: 100%;
+    min-height: 100dvh;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 14px 14px calc(12px + env(safe-area-inset-bottom, 0px)) 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+    box-sizing: border-box;
+    flex: 1;
   }
 
-  /* Header scaling */
+  /* Header compact scaling */
+  .dashboard-header {
+    flex-shrink: 0;
+  }
+
   .brand {
     gap: 10px;
   }
@@ -815,8 +840,9 @@ body {
 
   /* Ribbon compactness */
   .system-status-ribbon {
-    margin-top: 10px;
+    margin-top: 4px;
     gap: 6px;
+    flex-shrink: 0;
   }
 
   .status-text {
@@ -838,43 +864,45 @@ body {
   }
 
   .ribbon-divider {
-    margin: 10px 0 12px 0;
+    margin: 6px 0 8px 0;
+    flex-shrink: 0;
   }
 
   /* Compact 3-Column Metrics Grid */
   .metrics-grid {
     gap: 6px;
+    flex-shrink: 0;
   }
 
   .metric-card {
-    padding: 9px 8px;
+    padding: 8px 8px;
     min-height: auto;
     border-radius: 12px;
-    gap: 4px;
+    gap: 3px;
   }
 
   .metric-title {
-    font-size: 9.5px;
+    font-size: 9px;
     letter-spacing: 0.2px;
   }
 
   .metric-icon-box {
-    width: 18px;
-    height: 18px;
+    width: 17px;
+    height: 17px;
   }
 
   .metric-icon-box svg {
-    width: 12px;
-    height: 12px;
+    width: 11px;
+    height: 11px;
   }
 
   .metric-value-row {
-    margin: 1px 0;
+    margin: 0;
     gap: 4px;
   }
 
   .metric-number {
-    font-size: 23px;
+    font-size: 22px;
   }
 
   .metric-unit {
@@ -882,37 +910,42 @@ body {
   }
 
   .metric-footer {
-    font-size: 9.5px;
+    font-size: 9px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  /* Parking Section Layout */
+  /* Parking Section Layout - fills remaining phone height seamlessly */
   .parking-section {
-    padding: 12px 10px;
-    margin-top: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 10px;
+    margin-top: 0;
     border-radius: 14px;
+    min-height: 0;
   }
 
   .section-header {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
   }
 
   .section-title {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .section-subtitle {
-    font-size: 11px;
+    font-size: 10.5px;
   }
 
   .layout-legend {
-    gap: 10px;
+    gap: 8px;
   }
 
   .legend-item {
-    font-size: 11px;
+    font-size: 10.5px;
     gap: 4px;
   }
 
@@ -921,81 +954,107 @@ body {
     height: 7px;
   }
 
-  /* Inner Blueprint Frame */
+  /* Inner Blueprint Frame - expands to fill the parking section */
   .parking-lot-blueprint {
-    padding: 10px 8px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
     border-radius: 12px;
+    min-height: 0;
   }
 
   .lane-header {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     padding: 0 2px;
+    flex-shrink: 0;
   }
 
   .lane-mark {
-    font-size: 11px;
+    font-size: 10.5px;
     letter-spacing: 0.4px;
   }
 
   .lot-status-pill {
-    font-size: 10px;
-    padding: 2px 8px;
+    font-size: 9.5px;
+    padding: 2px 7px;
   }
 
-  /* 2x2 Slots Grid */
+  /* 2x2 Slots Grid - fills remaining blueprint height */
   .parking-bays-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
     gap: 8px;
+    min-height: 0;
   }
 
   .parking-bay {
-    min-height: 140px;
-    padding: 10px 8px;
+    min-height: 0;
+    height: 100%;
+    padding: 8px 8px;
     border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
+
+  .bay-header {
+    flex-shrink: 0;
   }
 
   .bay-code {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .bay-sensor-badge {
-    font-size: 9.5px;
+    font-size: 9px;
     padding: 2px 5px;
     border-radius: 5px;
   }
 
   .bay-visual {
-    padding: 6px 0 4px 0;
+    padding: 4px 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
 
   .p-symbol-ring {
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
   }
 
   .p-symbol {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .bay-status-label {
-    font-size: 9.5px;
-    margin-top: 4px;
+    font-size: 9px;
+    margin-top: 3px;
     letter-spacing: 1px;
   }
 
   .bay-footer {
-    margin-top: 6px;
+    margin-top: 4px;
+    flex-shrink: 0;
   }
 
   .bay-state-tag {
-    font-size: 10px;
+    font-size: 9.5px;
     padding: 4px 0;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.5px;
   }
 
-  /* Bottom Footer Info (Zero Excess Space) */
+  /* Bottom Footer Info (Clean & Pinned, Zero Void) */
   .dashboard-footer-info {
-    margin-top: 10px;
-    padding: 0 2px;
+    margin-top: 0;
+    padding: 2px 2px 0 2px;
+    flex-shrink: 0;
   }
 
   .rate-tag {
@@ -1003,8 +1062,8 @@ body {
   }
 
   .refresh-pill-btn {
-    font-size: 10.5px;
-    padding: 3px 10px;
+    font-size: 10px;
+    padding: 3px 9px;
   }
 
   /* Modal Mobile Sheet */
@@ -1033,14 +1092,11 @@ body {
   }
 }
 
-/* Ultra-compact screens (320px – 360px, e.g. iPhone SE, small Androids) */
+/* Extra small devices (<=360px e.g. iPhone SE 1st gen) */
 @media (max-width: 360px) {
-  body {
-    padding: 6px 4px 10px 4px;
-  }
-
   .slotix-container {
-    padding: 10px 8px 12px 8px;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)) 8px;
+    gap: 6px;
   }
 
   .brand-title {
@@ -1048,9 +1104,9 @@ body {
   }
 
   .brand-avatar {
-    width: 34px;
-    height: 34px;
-    font-size: 18px;
+    width: 32px;
+    height: 32px;
+    font-size: 17px;
   }
 
   .icon-btn-square {
@@ -1059,33 +1115,24 @@ body {
   }
 
   .metric-number {
-    font-size: 20px;
-  }
-
-  .metric-unit {
-    font-size: 10px;
+    font-size: 19px;
   }
 
   .metric-title {
-    font-size: 8.5px;
+    font-size: 8px;
   }
 
   .metric-footer {
-    font-size: 8.5px;
-  }
-
-  .parking-bay {
-    min-height: 132px;
-    padding: 8px 6px;
+    font-size: 8px;
   }
 
   .p-symbol-ring {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
   }
 
   .p-symbol {
-    font-size: 16px;
+    font-size: 15px;
   }
 }
 
