@@ -29,7 +29,6 @@ class SlotixFirebaseApp {
   init() {
     this.cacheDom();
     this.bindEvents();
-    this.bindSlotClicks();
     this.registerPWA();
     this.renderAll();
     this.initFirebase();
@@ -97,29 +96,6 @@ class SlotixFirebaseApp {
     window.addEventListener('offline', () => this.updateOnlineStatus(false));
   }
 
-  bindSlotClicks() {
-    this.slots.forEach(slot => {
-      const bay = document.getElementById(`bay-${slot.id}`);
-      if (bay) {
-        bay.addEventListener('click', () => {
-          const nextOccupied = !slot.occupied;
-          slot.occupied = nextOccupied;
-          slot.lastUpdated = Date.now();
-          this.lastPacketTime = Date.now();
-          this.playStatusSound(slot.occupied);
-          this.renderAll();
-
-          // Also push update to Firebase if connected
-          if (this.db && this.firebaseConnected) {
-            this.db.ref(`/slots/${slot.id}`).set(nextOccupied ? 1 : 0).catch(err => {
-              console.warn('Firebase set error:', err);
-            });
-          }
-        });
-      }
-    });
-  }
-
   registerPWA() {
     if ('caches' in window) {
       caches.keys().then((keys) => {
@@ -178,12 +154,26 @@ class SlotixFirebaseApp {
       // 2. Real-Time Slot Telemetry Listener (/slots)
       this.db.ref('/slots').on('value', (snapshot) => {
         const data = snapshot.val();
-        this.lastPacketTime = Date.now();
         if (data) {
+          this.lastPacketTime = Date.now();
           this.handleSlotsUpdate(data);
         }
       }, (error) => {
         console.warn('Firebase read notice on /slots:', error);
+      });
+
+      // Fallback listener for root level updates (e.g., direct { S01: 1 } at root)
+      this.db.ref().on('value', (snapshot) => {
+        const rootData = snapshot.val();
+        if (rootData) {
+          if (rootData.slots) {
+            this.lastPacketTime = Date.now();
+            this.handleSlotsUpdate(rootData.slots);
+          } else if (rootData.S01 !== undefined || rootData.S02 !== undefined) {
+            this.lastPacketTime = Date.now();
+            this.handleSlotsUpdate(rootData);
+          }
+        }
       });
 
       // 3. Real-Time ESP8266 System Heartbeat Listener (/system)

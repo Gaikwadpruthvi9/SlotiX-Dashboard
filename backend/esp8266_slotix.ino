@@ -39,15 +39,15 @@
 // ==============================================================
 // 1. Wi-Fi Network Credentials:
 // ==============================================================
-const char* WIFI_SSID     = "YOUR_WIFI_NAME";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+const char* WIFI_SSID     = "PruthviG";
+const char* WIFI_PASSWORD = "11111111";
 
 // ==============================================================
 // 2. Firebase Realtime Database URL:
 // ==============================================================
 // Example: "https://slotix-parking-default-rtdb.firebaseio.com"
 // (Do NOT include a trailing slash)
-const char* FIREBASE_HOST_URL = "https://YOUR_PROJECT-default-rtdb.firebaseio.com";
+const char* FIREBASE_HOST_URL = "https://slotix-a779f-default-rtdb.firebaseio.com";
 
 // Optional: Firebase Database Secret / Auth Token (leave empty "" if rules allow read/write)
 const char* FIREBASE_AUTH = "";
