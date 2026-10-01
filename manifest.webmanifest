@@ -1,0 +1,22 @@
+{
+  "name": "SLOTIX Smart Parking",
+  "short_name": "SLOTIX",
+  "description": "Real-time Smart Parking Monitoring System with ESP8266 & IR Sensors",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0d14",
+  "theme_color": "#0a0d14",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

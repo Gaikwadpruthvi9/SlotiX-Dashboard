@@ -1,0 +1,13 @@
+{
+  "name": "slotix-smart-parking",
+  "version": "1.0.0",
+  "description": "SLOTIX - Smart Parking System Mobile Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["iot", "parking", "esp8266", "dashboard", "pwa"],
+  "author": "SLOTIX Team",
+  "license": "MIT"
+}
