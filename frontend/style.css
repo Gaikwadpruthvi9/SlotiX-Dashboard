@@ -755,22 +755,337 @@ body {
   display: none !important;
 }
 
-/* Responsive adjustments */
+/* ==========================================================================
+   Mobile Responsiveness (320px – 430px Screens)
+   Optimized for iPhone SE, 12/13/14/15/16, Galaxy S-series, Pixel
+   Removes unnecessary padding and eliminates bottom empty space
+   ========================================================================== */
 @media (max-width: 480px) {
   body {
-    padding: 8px;
+    padding: 8px 6px 14px 6px;
+    min-height: auto;
+    align-items: stretch;
   }
+
+  .dashboard-wrapper {
+    max-width: 100%;
+  }
+
   .slotix-container {
-    padding: 14px 14px 18px 14px;
+    padding: 14px 12px 14px 12px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   }
-  .metrics-grid {
+
+  /* Header scaling */
+  .brand {
+    gap: 10px;
+  }
+
+  .brand-avatar {
+    width: 38px;
+    height: 38px;
+    font-size: 20px;
+    border-radius: 10px;
+  }
+
+  .brand-title {
+    font-size: 18px;
+  }
+
+  .brand-subtitle {
+    font-size: 10px;
+    letter-spacing: 0.7px;
+  }
+
+  .header-actions {
+    gap: 6px;
+  }
+
+  .icon-btn-square {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+  }
+
+  .icon-btn-square svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Ribbon compactness */
+  .system-status-ribbon {
+    margin-top: 10px;
+    gap: 6px;
+  }
+
+  .status-text {
+    font-size: 10.5px;
+    letter-spacing: 0.5px;
+  }
+
+  .status-meta {
     gap: 8px;
   }
-  .metric-card {
-    padding: 10px;
+
+  .sensor-sync-label {
+    font-size: 10.5px;
   }
+
+  .heartbeat-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .ribbon-divider {
+    margin: 10px 0 12px 0;
+  }
+
+  /* Compact 3-Column Metrics Grid */
+  .metrics-grid {
+    gap: 6px;
+  }
+
+  .metric-card {
+    padding: 9px 8px;
+    min-height: auto;
+    border-radius: 12px;
+    gap: 4px;
+  }
+
+  .metric-title {
+    font-size: 9.5px;
+    letter-spacing: 0.2px;
+  }
+
+  .metric-icon-box {
+    width: 18px;
+    height: 18px;
+  }
+
+  .metric-icon-box svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .metric-value-row {
+    margin: 1px 0;
+    gap: 4px;
+  }
+
   .metric-number {
-    font-size: 26px;
+    font-size: 23px;
+  }
+
+  .metric-unit {
+    font-size: 11px;
+  }
+
+  .metric-footer {
+    font-size: 9.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Parking Section Layout */
+  .parking-section {
+    padding: 12px 10px;
+    margin-top: 12px;
+    border-radius: 14px;
+  }
+
+  .section-header {
+    margin-bottom: 10px;
+  }
+
+  .section-title {
+    font-size: 16px;
+  }
+
+  .section-subtitle {
+    font-size: 11px;
+  }
+
+  .layout-legend {
+    gap: 10px;
+  }
+
+  .legend-item {
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .legend-dot {
+    width: 7px;
+    height: 7px;
+  }
+
+  /* Inner Blueprint Frame */
+  .parking-lot-blueprint {
+    padding: 10px 8px;
+    border-radius: 12px;
+  }
+
+  .lane-header {
+    margin-bottom: 10px;
+    padding: 0 2px;
+  }
+
+  .lane-mark {
+    font-size: 11px;
+    letter-spacing: 0.4px;
+  }
+
+  .lot-status-pill {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  /* 2x2 Slots Grid */
+  .parking-bays-grid {
+    gap: 8px;
+  }
+
+  .parking-bay {
+    min-height: 140px;
+    padding: 10px 8px;
+    border-radius: 12px;
+  }
+
+  .bay-code {
+    font-size: 16px;
+  }
+
+  .bay-sensor-badge {
+    font-size: 9.5px;
+    padding: 2px 5px;
+    border-radius: 5px;
+  }
+
+  .bay-visual {
+    padding: 6px 0 4px 0;
+  }
+
+  .p-symbol-ring {
+    width: 42px;
+    height: 42px;
+  }
+
+  .p-symbol {
+    font-size: 18px;
+  }
+
+  .bay-status-label {
+    font-size: 9.5px;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .bay-footer {
+    margin-top: 6px;
+  }
+
+  .bay-state-tag {
+    font-size: 10px;
+    padding: 4px 0;
+    letter-spacing: 0.6px;
+  }
+
+  /* Bottom Footer Info (Zero Excess Space) */
+  .dashboard-footer-info {
+    margin-top: 10px;
+    padding: 0 2px;
+  }
+
+  .rate-tag {
+    font-size: 10.5px;
+  }
+
+  .refresh-pill-btn {
+    font-size: 10.5px;
+    padding: 3px 10px;
+  }
+
+  /* Modal Mobile Sheet */
+  .modal-sheet {
+    padding: 16px;
+    border-radius: 14px;
+    max-width: 95%;
+  }
+
+  .modal-header {
+    margin-bottom: 12px;
+  }
+
+  .modal-title {
+    font-size: 14px;
+  }
+
+  .setting-item {
+    margin-bottom: 10px;
+    gap: 4px;
+  }
+
+  .dark-input {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
+/* Ultra-compact screens (320px – 360px, e.g. iPhone SE, small Androids) */
+@media (max-width: 360px) {
+  body {
+    padding: 6px 4px 10px 4px;
+  }
+
+  .slotix-container {
+    padding: 10px 8px 12px 8px;
+  }
+
+  .brand-title {
+    font-size: 16px;
+  }
+
+  .brand-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+  }
+
+  .icon-btn-square {
+    width: 30px;
+    height: 30px;
+  }
+
+  .metric-number {
+    font-size: 20px;
+  }
+
+  .metric-unit {
+    font-size: 10px;
+  }
+
+  .metric-title {
+    font-size: 8.5px;
+  }
+
+  .metric-footer {
+    font-size: 8.5px;
+  }
+
+  .parking-bay {
+    min-height: 132px;
+    padding: 8px 6px;
+  }
+
+  .p-symbol-ring {
+    width: 36px;
+    height: 36px;
+  }
+
+  .p-symbol {
+    font-size: 16px;
   }
 }
 
