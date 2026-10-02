@@ -38,11 +38,18 @@
               <h1 class="brand-title">SLOTIX</h1>
               <span id="headerAdminBadge" class="header-admin-tag hidden">ADMIN</span>
             </div>
-            <p class="brand-subtitle">SMART PARKING SYSTEM</p>
+            <p class="brand-subtitle" id="dashboardLocationSub">SMART PARKING SYSTEM</p>
           </div>
         </div>
 
         <div class="header-actions">
+          <!-- Switch Location / Organisation Button -->
+          <a href="select.html" class="icon-btn-square" id="switchLocationBtn" title="Switch Location / Organisation" aria-label="Switch Location / Organisation" style="text-decoration: none;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+          </a>
           <!-- Theme Toggle Button (Dark / Light Mode) -->
           <button id="themeToggleBtn" class="icon-btn-square" title="Toggle Light / Dark Mode" aria-label="Toggle theme">
             <!-- Sun Icon (visible in dark mode) -->
@@ -333,14 +340,21 @@
           </div>
         </div>
 
-        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); text-align: center;">
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: center; gap: 20px;">
+          <a href="select.html" style="color: #38bdf8; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            Switch Location
+          </a>
           <a href="login.html" id="logoutLink" style="color: #ef4444; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16 17 21 12 16 7"></polyline>
               <line x1="21" y1="12" x2="9" y2="12"></line>
             </svg>
-            Sign Out to Login
+            Sign Out
           </a>
         </div>
       </div>

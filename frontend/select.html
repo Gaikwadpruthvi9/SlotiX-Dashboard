@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a101d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SLOTIX">
+  <meta name="description" content="SLOTIX - Select Location & Organisation">
+  <title>SLOTIX – Select Location & Organisation</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="./icons/slotix-logo.svg">
+
+  <!-- Google Fonts: Poppins & Nunito & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="select.css?v=1">
+
+  <!-- Firebase Web SDK (v10 Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="firebase-config.js?v=9"></script>
+</head>
+<body>
+  <div class="portal-wrapper">
+    <div class="portal-card">
+
+      <!-- Top Header Navigation Bar -->
+      <header class="portal-header">
+        <div class="brand-section">
+          <div class="brand-logo-wrap" title="SLOTIX Smart Parking">
+            <img src="images/slotix-logo.png" alt="SLOTIX" class="brand-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <span class="brand-fallback-badge" style="display:none;">P</span>
+          </div>
+          <div class="brand-text">
+            <div class="brand-title-row">
+              <span class="brand-title">SLOTIX</span>
+              <span id="roleBadge" class="user-role-tag user">USER</span>
+            </div>
+            <p class="brand-subtitle" id="userEmailDisplay">Loading account...</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <!-- Theme Toggle Button -->
+          <button id="themeToggleBtn" class="icon-btn-square" title="Toggle Light / Dark Mode" aria-label="Toggle theme">
+            <!-- Sun Icon (visible in dark mode) -->
+            <svg id="themeIconSun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <!-- Moon Icon (visible in light mode) -->
+            <svg id="themeIconMoon" class="hidden" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+
+          <!-- Sign Out Button -->
+          <button id="signOutBtn" class="icon-btn-square signout" title="Sign Out" aria-label="Sign Out">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Flow Stepper Indicator -->
+      <nav class="flow-stepper" aria-label="Flow steps">
+        <div class="flow-step active" id="stepIndicatorLocation">
+          <span class="flow-step-dot">1</span>
+          <span class="flow-step-text">Location</span>
+        </div>
+        <div class="flow-step-divider" id="stepDivider1"></div>
+        <div class="flow-step" id="stepIndicatorOrg">
+          <span class="flow-step-dot">2</span>
+          <span class="flow-step-text">Organisation</span>
+        </div>
+        <div class="flow-step-divider" id="stepDivider2"></div>
+        <div class="flow-step" id="stepIndicatorDash">
+          <span class="flow-step-dot">3</span>
+          <span class="flow-step-text">Dashboard</span>
+        </div>
+      </nav>
+
+      <!-- Realtime Cloud Status Banner -->
+      <div class="realtime-status-bar">
+        <div class="realtime-pill">
+          <span class="realtime-dot" id="firebasePulseDot"></span>
+          <span class="realtime-label" id="firebaseStatusText">Connecting to Firebase...</span>
+        </div>
+        <span class="realtime-count" id="realtimeCounter">0 Locations</span>
+      </div>
+
+      <!-- ===================================================================
+           VIEW 1: SELECT LOCATION
+           =================================================================== -->
+      <main id="locationView" class="portal-main-view">
+        <div class="view-header">
+          <div class="view-header-titles">
+            <h1 class="view-title">Select Location</h1>
+            <p class="view-subtitle">Select a parking facility or campus to view organisations</p>
+          </div>
+
+          <!-- Admin Add Location Button -->
+          <div class="admin-actions-bar" id="adminLocationActions">
+            <button type="button" id="openAddLocationModalBtn" class="primary-action-btn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Add Location</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-container">
+          <span class="search-icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input 
+            type="text" 
+            id="locationSearchInput" 
+            class="search-input" 
+            placeholder="Search locations by name, city, or area..."
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button type="button" id="clearLocationSearchBtn" class="clear-search-btn hidden" aria-label="Clear search">
+            ✕
+          </button>
+        </div>
+
+        <!-- Locations List Container -->
+        <div id="locationsList" class="items-grid" role="list">
+          <!-- Rendered dynamically via JavaScript from Firebase -->
+        </div>
+
+        <!-- Empty State (No Locations) -->
+        <div id="locationsEmptyState" class="empty-state-card hidden">
+          <div class="empty-icon-wrap">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+          </div>
+          <h2 class="empty-title" id="locationEmptyTitle">No Locations Available</h2>
+          <p class="empty-desc" id="locationEmptyDesc">
+            Locations configured by the administrator will appear here in real time.
+          </p>
+          <div id="adminEmptyLocationAction" class="empty-action-wrap hidden">
+            <button type="button" id="emptyAddLocationBtn" class="primary-action-btn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Add First Location</span>
+            </button>
+          </div>
+        </div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW 2: SELECT ORGANISATION (Under Selected Location)
+           =================================================================== -->
+      <main id="organisationView" class="portal-main-view hidden">
+        <div class="view-header">
+          <div class="nav-back-row">
+            <button type="button" id="backToLocationsBtn" class="back-pill-btn">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              <span>Locations</span>
+            </button>
+            <span class="active-location-badge" id="activeLocationBadge">Location Name</span>
+          </div>
+
+          <div class="view-header-titles">
+            <h1 class="view-title">Select Organisation</h1>
+            <p class="view-subtitle" id="orgViewSubtitle">Select an organisation belonging to this location</p>
+          </div>
+
+          <!-- Admin Add Organisation Button -->
+          <div class="admin-actions-bar" id="adminOrgActions">
+            <button type="button" id="openAddOrgModalBtn" class="primary-action-btn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Add Organisation</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Organisation Search Bar -->
+        <div class="search-container">
+          <span class="search-icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input 
+            type="text" 
+            id="orgSearchInput" 
+            class="search-input" 
+            placeholder="Search organisations by name or code..."
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button type="button" id="clearOrgSearchBtn" class="clear-search-btn hidden" aria-label="Clear search">
+            ✕
+          </button>
+        </div>
+
+        <!-- Organisations List Container -->
+        <div id="organisationsList" class="items-grid" role="list">
+          <!-- Rendered dynamically via JavaScript from Firebase -->
+        </div>
+
+        <!-- Empty State (No Organisations) -->
+        <div id="orgsEmptyState" class="empty-state-card hidden">
+          <div class="empty-icon-wrap">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 21h18"></path>
+              <path d="M5 21V7l8-4v18"></path>
+              <path d="M19 21V11l-6-4"></path>
+              <line x1="9" y1="9" x2="9" y2="9.01"></line>
+              <line x1="9" y1="13" x2="9" y2="13.01"></line>
+              <line x1="9" y1="17" x2="9" y2="17.01"></line>
+            </svg>
+          </div>
+          <h2 class="empty-title" id="orgEmptyTitle">No Organisations Found</h2>
+          <p class="empty-desc" id="orgEmptyDesc">
+            No organisations have been added under this location yet.
+          </p>
+          <div id="adminEmptyOrgAction" class="empty-action-wrap hidden">
+            <button type="button" id="emptyAddOrgBtn" class="primary-action-btn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Add Organisation</span>
+            </button>
+          </div>
+        </div>
+      </main>
+
+      <!-- Bottom Small Footer -->
+      <footer class="portal-footer">
+        <p>SLOTIX • Smart Parking Systems Realtime Cloud</p>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       NOT INTEGRATED NOTICE MODAL SHEET
+       Shows exact requested text when a non-integrated organisation is chosen
+       ===================================================================== -->
+  <div id="notIntegratedModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="notIntegratedTitle">
+    <div class="modal-card notice-sheet">
+      <div class="modal-handle-bar"></div>
+      
+      <div class="notice-icon-box">
+        <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+
+      <div class="notice-content">
+        <h3 id="notIntegratedTitle" class="notice-title">Parking System Not Integrated Yet</h3>
+        <p class="notice-desc">
+          Real-time parking availability is not available for this organisation yet.
+        </p>
+
+        <div class="notice-details-card">
+          <div class="detail-row">
+            <span class="detail-label">Organisation</span>
+            <strong class="detail-value" id="noticeOrgName">—</strong>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Location</span>
+            <strong class="detail-value" id="noticeLocName">—</strong>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Integration Status</span>
+            <span class="status-pill-offline">Not Integrated</span>
+          </div>
+        </div>
+
+        <!-- Admin Quick Enable Action (Visible only to Admin) -->
+        <div id="adminEnableNoticeBox" class="admin-notice-box hidden">
+          <p class="admin-notice-tip">Admin Control: You can mark this organisation as Integrated to immediately activate real-time IoT monitoring.</p>
+          <button type="button" id="adminQuickIntegrateBtn" class="primary-action-btn glow">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Mark as Integrated &amp; Open Dashboard</span>
+          </button>
+        </div>
+
+        <div class="modal-btn-row" style="margin-top: 18px;">
+          <button type="button" id="closeNotIntegratedBtn" class="modal-primary-btn">
+            Choose Another Organisation
+          </button>
+          <button type="button" id="noticeBackToLocationsBtn" class="modal-secondary-btn">
+            Back to Locations
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       ADMIN MODAL 1: ADD / EDIT LOCATION
+       ===================================================================== -->
+  <div id="locationModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="locationModalTitle">
+    <div class="modal-card">
+      <div class="modal-handle-bar"></div>
+
+      <div class="modal-header">
+        <div class="modal-header-info">
+          <div class="modal-header-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+          </div>
+          <div>
+            <h3 id="locationModalTitle" class="modal-title">Add New Location</h3>
+            <p class="modal-subtitle">Locations are stored in Firebase Realtime Database</p>
+          </div>
+        </div>
+        <button type="button" id="closeLocationModalBtn" class="modal-close-btn" aria-label="Close dialog">✕</button>
+      </div>
+
+      <form id="locationForm" class="modal-form" novalidate>
+        <input type="hidden" id="locFormMode" value="add">
+        <input type="hidden" id="locFormId" value="">
+
+        <div class="form-field">
+          <label class="form-label" for="locNameInput">Location Name <span class="required-star">*</span></label>
+          <div class="input-container">
+            <input 
+              type="text" 
+              id="locNameInput" 
+              class="login-input" 
+              placeholder="e.g. Pune Tech Park, Hinjawadi" 
+              required
+            >
+          </div>
+          <span id="locNameError" class="field-error-msg hidden">Please enter a location name</span>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="locCityInput">City / Region</label>
+          <div class="input-container">
+            <input 
+              type="text" 
+              id="locCityInput" 
+              class="login-input" 
+              placeholder="e.g. Pune, Maharashtra"
+            >
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="locCodeInput">Code / Short Identifier</label>
+          <div class="input-container">
+            <input 
+              type="text" 
+              id="locCodeInput" 
+              class="login-input" 
+              placeholder="e.g. PTP-WEST"
+            >
+          </div>
+        </div>
+
+        <div class="modal-btn-row">
+          <button type="button" id="cancelLocationBtn" class="modal-secondary-btn">Cancel</button>
+          <button type="submit" id="saveLocationBtn" class="modal-primary-btn">
+            <span class="btn-text">Save Location</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       ADMIN MODAL 2: ADD / EDIT ORGANISATION
+       ===================================================================== -->
+  <div id="orgModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="orgModalTitle">
+    <div class="modal-card">
+      <div class="modal-handle-bar"></div>
+
+      <div class="modal-header">
+        <div class="modal-header-info">
+          <div class="modal-header-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 21h18"></path>
+              <path d="M5 21V7l8-4v18"></path>
+              <path d="M19 21V11l-6-4"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 id="orgModalTitle" class="modal-title">Add Organisation</h3>
+            <p class="modal-subtitle" id="orgModalSubtitle">Under selected location</p>
+          </div>
+        </div>
+        <button type="button" id="closeOrgModalBtn" class="modal-close-btn" aria-label="Close dialog">✕</button>
+      </div>
+
+      <form id="orgForm" class="modal-form" novalidate>
+        <input type="hidden" id="orgFormMode" value="add">
+        <input type="hidden" id="orgFormId" value="">
+
+        <div class="form-field">
+          <label class="form-label" for="orgNameInput">Organisation Name <span class="required-star">*</span></label>
+          <div class="input-container">
+            <input 
+              type="text" 
+              id="orgNameInput" 
+              class="login-input" 
+              placeholder="e.g. Infosys Technologies, Tower B" 
+              required
+            >
+          </div>
+          <span id="orgNameError" class="field-error-msg hidden">Please enter an organisation name</span>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="orgCodeInput">Department / Wing / Building</label>
+          <div class="input-container">
+            <input 
+              type="text" 
+              id="orgCodeInput" 
+              class="login-input" 
+              placeholder="e.g. Wing A, 3rd Floor"
+            >
+          </div>
+        </div>
+
+        <!-- Integration Status Toggle -->
+        <div class="form-field">
+          <label class="form-label">Integration Status</label>
+          <div class="integration-status-picker">
+            <label class="status-radio-card" id="statusCardIntegrated">
+              <input type="radio" name="orgIntegrationStatus" value="integrated" id="radioIntegrated" checked>
+              <div class="radio-content">
+                <span class="status-indicator-dot online"></span>
+                <div>
+                  <strong class="status-label">Integrated</strong>
+                  <p class="status-sub">Opens live parking dashboard</p>
+                </div>
+              </div>
+            </label>
+
+            <label class="status-radio-card" id="statusCardNotIntegrated">
+              <input type="radio" name="orgIntegrationStatus" value="not_integrated" id="radioNotIntegrated">
+              <div class="radio-content">
+                <span class="status-indicator-dot offline"></span>
+                <div>
+                  <strong class="status-label">Not Integrated</strong>
+                  <p class="status-sub">Shows pending integration notice</p>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-btn-row">
+          <button type="button" id="cancelOrgBtn" class="modal-secondary-btn">Cancel</button>
+          <button type="submit" id="saveOrgBtn" class="modal-primary-btn">
+            <span class="btn-text">Save Organisation</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       ADMIN MODAL 3: DELETE CONFIRMATION
+       ===================================================================== -->
+  <div id="deleteModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+    <div class="modal-card">
+      <div class="modal-handle-bar"></div>
+
+      <div class="modal-header">
+        <div class="modal-header-info">
+          <div class="modal-header-icon danger">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 id="deleteModalTitle" class="modal-title">Confirm Deletion</h3>
+            <p class="modal-subtitle">This action will be synchronized to Firebase</p>
+          </div>
+        </div>
+        <button type="button" id="closeDeleteModalBtn" class="modal-close-btn" aria-label="Close dialog">✕</button>
+      </div>
+
+      <div style="padding: 12px 0;">
+        <p class="delete-warning-text" id="deleteConfirmText">
+          Are you sure you want to delete this item?
+        </p>
+      </div>
+
+      <div class="modal-btn-row">
+        <button type="button" id="cancelDeleteBtn" class="modal-secondary-btn">Cancel</button>
+        <button type="button" id="confirmDeleteBtn" class="modal-danger-btn">
+          <span>Delete Permanently</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="select.js?v=1"></script>
+</body>
+</html>

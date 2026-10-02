@@ -250,6 +250,8 @@ const server = http.createServer((req, res) => {
     normalizedPath = 'index.html';
   } else if (normalizedPath === '/login') {
     normalizedPath = 'login.html';
+  } else if (normalizedPath === '/select') {
+    normalizedPath = 'select.html';
   }
   let filePath = path.join(frontendDir, normalizedPath);
 

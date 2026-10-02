@@ -29,14 +29,48 @@ class SlotixFirebaseApp {
 
   init() {
     this.ADMIN_EMAIL = 'gaikwadpruthvi200@gmail.com';
+
+    // Verify authentication
+    const isLoggedIn = localStorage.getItem('slotix_logged_in') === 'true';
+    if (!isLoggedIn) {
+      window.location.replace('login.html');
+      return;
+    }
+
+    // Verify organisation selection
+    const savedOrgStr = localStorage.getItem('slotix_selected_organisation');
+    if (!savedOrgStr) {
+      window.location.replace('select.html');
+      return;
+    }
+
     this.cacheDom();
     this.applyTheme(this.theme);
     this.setupAdminView();
+    this.displaySelectedOrgInfo();
     this.bindEvents();
     this.registerPWA();
     this.renderAll();
     this.initFirebase();
     this.startClockTicker();
+  }
+
+  displaySelectedOrgInfo() {
+    try {
+      const orgStr = localStorage.getItem('slotix_selected_organisation');
+      const locStr = localStorage.getItem('slotix_selected_location');
+      const sub = document.getElementById('dashboardLocationSub');
+      if (orgStr && sub) {
+        const org = JSON.parse(orgStr);
+        const loc = locStr ? JSON.parse(locStr) : null;
+        if (loc && loc.name) {
+          sub.textContent = `${loc.name} • ${org.name}`;
+          sub.title = `${loc.name} • ${org.name}`;
+        } else {
+          sub.textContent = `${org.name}`;
+        }
+      }
+    } catch (_) {}
   }
 
   cacheDom() {
@@ -118,6 +152,8 @@ class SlotixFirebaseApp {
         try {
           localStorage.removeItem('slotix_logged_in');
           localStorage.removeItem('slotix_current_user');
+          localStorage.removeItem('slotix_selected_location');
+          localStorage.removeItem('slotix_selected_organisation');
         } catch (_) {}
         window.location.href = 'login.html';
       });

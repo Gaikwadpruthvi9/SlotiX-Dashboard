@@ -807,10 +807,10 @@ document.addEventListener('DOMContentLoaded', () => {
         signInBtn.style.opacity = '0.85';
       }
 
-      showToast('Access Granted! Redirecting to Dashboard...', 'success');
+      showToast('Access Granted! Redirecting to Location Selection...', 'success');
 
       setTimeout(() => {
-        window.location.href = 'index.html';
+        window.location.href = 'select.html';
       }, 500);
     });
   }
