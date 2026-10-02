@@ -245,7 +245,13 @@ const server = http.createServer((req, res) => {
   const frontendDir = fs.existsSync(path.join(__dirname, '..', 'frontend')) 
     ? path.join(__dirname, '..', 'frontend') 
     : __dirname;
-  let filePath = path.join(frontendDir, pathname === '/' ? 'index.html' : pathname);
+  let normalizedPath = pathname;
+  if (normalizedPath === '/' || normalizedPath === '/index') {
+    normalizedPath = 'index.html';
+  } else if (normalizedPath === '/login') {
+    normalizedPath = 'login.html';
+  }
+  let filePath = path.join(frontendDir, normalizedPath);
 
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {

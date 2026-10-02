@@ -104,8 +104,13 @@ class SlotixFirebaseApp {
     // Logout
     const logoutLink = document.getElementById('logoutLink');
     if (logoutLink) {
-      logoutLink.addEventListener('click', () => {
-        localStorage.removeItem('slotix_logged_in');
+      logoutLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        try {
+          localStorage.removeItem('slotix_logged_in');
+          localStorage.removeItem('slotix_current_user');
+        } catch (_) {}
+        window.location.href = 'login.html';
       });
     }
 
@@ -118,7 +123,7 @@ class SlotixFirebaseApp {
     if ('caches' in window) {
       caches.keys().then((keys) => {
         keys.forEach((key) => {
-          if (key !== 'slotix-cache-v6') caches.delete(key);
+          if (key !== 'slotix-cache-v7') caches.delete(key);
         });
       });
     }

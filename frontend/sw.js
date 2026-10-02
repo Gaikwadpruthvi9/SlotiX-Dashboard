@@ -1,4 +1,4 @@
-const CACHE_NAME = 'slotix-cache-v5';
+const CACHE_NAME = 'slotix-cache-v7';
 
 self.addEventListener('install', (event) => {
   // Activate immediately without waiting
