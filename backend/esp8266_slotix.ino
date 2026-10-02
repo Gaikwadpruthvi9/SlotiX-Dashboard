@@ -104,8 +104,8 @@ void sendToFirebase(bool s01Occ, bool s02Occ, bool s03Occ, bool s04Occ) {
 
   HTTPClient http;
 
-  // Build Firebase REST URL: https://<HOST>/slots.json
-  String url = String(FIREBASE_HOST_URL) + "/slots.json";
+  // Build Firebase REST URL: https://<HOST>/parking.json
+  String url = String(FIREBASE_HOST_URL) + "/parking.json";
   if (strlen(FIREBASE_AUTH) > 0) {
     url += "?auth=" + String(FIREBASE_AUTH);
   }
@@ -117,15 +117,20 @@ void sendToFirebase(bool s01Occ, bool s02Occ, bool s03Occ, bool s04Occ) {
 
   http.addHeader("Content-Type", "application/json");
 
-  // Construct JSON payload: 1 = Occupied, 0 = Available
+  int occCount = (s01Occ ? 1 : 0) + (s02Occ ? 1 : 0) + (s03Occ ? 1 : 0) + (s04Occ ? 1 : 0);
+  int availCount = 4 - occCount;
+
+  // Construct JSON payload: { S01: { status, sensor, sensorStatus }, ..., available, occupied }
   String payload = "{";
-  payload += "\"S01\":" + String(s01Occ ? 1 : 0) + ",";
-  payload += "\"S02\":" + String(s02Occ ? 1 : 0) + ",";
-  payload += "\"S03\":" + String(s03Occ ? 1 : 0) + ",";
-  payload += "\"S04\":" + String(s04Occ ? 1 : 0);
+  payload += "\"S01\":{\"status\":\"" + String(s01Occ ? "occupied" : "available") + "\",\"sensor\":\"IR1\",\"sensorStatus\":\"normal\"},";
+  payload += "\"S02\":{\"status\":\"" + String(s02Occ ? "occupied" : "available") + "\",\"sensor\":\"IR2\",\"sensorStatus\":\"normal\"},";
+  payload += "\"S03\":{\"status\":\"" + String(s03Occ ? "occupied" : "available") + "\",\"sensor\":\"IR3\",\"sensorStatus\":\"normal\"},";
+  payload += "\"S04\":{\"status\":\"" + String(s04Occ ? "occupied" : "available") + "\",\"sensor\":\"IR4\",\"sensorStatus\":\"normal\"},";
+  payload += "\"available\":" + String(availCount) + ",";
+  payload += "\"occupied\":" + String(occCount);
   payload += "}";
 
-  Serial.print("[Firebase TX /slots] Payload: ");
+  Serial.print("[Firebase TX /parking] Payload: ");
   Serial.println(payload);
 
   // Send PATCH request so other fields in database are preserved

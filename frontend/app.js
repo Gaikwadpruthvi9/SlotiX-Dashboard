@@ -6,19 +6,27 @@
 
 class SlotixFirebaseApp {
   constructor() {
+    // S01-S04 Parking Slot Mappings
     this.slots = [
-      { id: "S01", name: "Slot 01", occupied: false, sensorId: "IR-SEN-01", pin: "D1", gpio: "GPIO 5", lastUpdated: null },
-      { id: "S02", name: "Slot 02", occupied: false, sensorId: "IR-SEN-02", pin: "D2", gpio: "GPIO 4", lastUpdated: null },
-      { id: "S03", name: "Slot 03", occupied: false, sensorId: "IR-SEN-03", pin: "D5", gpio: "GPIO 14", lastUpdated: null },
-      { id: "S04", name: "Slot 04", occupied: false, sensorId: "IR-SEN-04", pin: "D6", gpio: "GPIO 12", lastUpdated: null }
+      { id: "S01", name: "Parking Slot 1", occupied: false, status: "available", sensor: "IR1", sensorStatus: "normal", lastUpdated: null },
+      { id: "S02", name: "Parking Slot 2", occupied: false, status: "available", sensor: "IR2", sensorStatus: "normal", lastUpdated: null },
+      { id: "S03", name: "Parking Slot 3", occupied: false, status: "available", sensor: "IR3", sensorStatus: "normal", lastUpdated: null },
+      { id: "S04", name: "Parking Slot 4", occupied: false, status: "available", sensor: "IR4", sensorStatus: "normal", lastUpdated: null }
     ];
+
+    this.availableCount = null;
+    this.occupiedCount = null;
+    this.totalSlots = 4;
+    this.isLoading = true;
+    this.hasError = false;
+    this.errorMessage = '';
 
     this.firebaseApp = null;
     this.db = null;
+    this.parkingRef = null;
     this.firebaseConnected = false;
     this.espOnline = false;
-    this.lastHeartbeatEpoch = null;
-    this.lastPacketTime = Date.now() - 4374 * 1000; // Matches initial cloud state
+    this.lastPacketTime = null;
     this.soundEnabled = true;
     this.audioCtx = null;
     this.config = getFirebaseConfig();
@@ -186,14 +194,11 @@ class SlotixFirebaseApp {
     try {
       // Check if SDK loaded
       if (typeof firebase === 'undefined') {
-        if (this.dom.systemStatusLabel) {
-          this.dom.systemStatusLabel.textContent = 'FIREBASE SDK OFFLINE';
-          this.dom.systemStatusLabel.classList.add('offline');
-        }
+        this.handleFirebaseError(new Error('Firebase SDK offline or failed to load.'));
         return;
       }
 
-      // Initialize App
+      // Initialize App (prevent duplicate initialization)
       if (!firebase.apps.length) {
         this.firebaseApp = firebase.initializeApp(this.config);
       } else {
@@ -206,119 +211,171 @@ class SlotixFirebaseApp {
       this.db.ref('.info/connected').on('value', (snap) => {
         const isConnected = Boolean(snap.val());
         this.firebaseConnected = isConnected;
-        if (isConnected) {
-          if (this.dom.systemPulse) this.dom.systemPulse.classList.remove('offline');
-          if (this.dom.systemStatusLabel) {
-            this.dom.systemStatusLabel.classList.remove('offline');
-            this.dom.systemStatusLabel.textContent = 'FIREBASE CLOUD LIVE';
-          }
-          if (this.dom.latencyTag) this.dom.latencyTag.textContent = 'Firebase: Cloud Live';
-        } else {
-          // If momentarily disconnected, keep status visible
-          if (this.dom.latencyTag) this.dom.latencyTag.textContent = 'Connecting to Cloud...';
-        }
+        this.updateConnectionState(isConnected);
       });
 
-      // 2. Real-Time Slot Telemetry Listener (/slots)
-      this.db.ref('/slots').on('value', (snapshot) => {
+      // 2. Real-Time Telemetry Listener (/parking)
+      // NodeMCU ESP8266 writes live slot data to /parking every ~1s
+      this.parkingRef = this.db.ref('/parking');
+      this.parkingRef.on('value', (snapshot) => {
         const data = snapshot.val();
+        this.isLoading = false;
+        this.hasError = false;
         if (data) {
           this.lastPacketTime = Date.now();
-          this.handleSlotsUpdate(data);
+          this.handleParkingUpdate(data);
         }
       }, (error) => {
-        console.warn('Firebase read notice on /slots:', error);
+        this.handleFirebaseError(error);
       });
 
-      // Fallback listener for root level updates (e.g., direct { S01: 1 } at root)
-      this.db.ref().on('value', (snapshot) => {
-        const rootData = snapshot.val();
-        if (rootData) {
-          if (rootData.slots) {
-            this.lastPacketTime = Date.now();
-            this.handleSlotsUpdate(rootData.slots);
-          } else if (rootData.S01 !== undefined || rootData.S02 !== undefined) {
-            this.lastPacketTime = Date.now();
-            this.handleSlotsUpdate(rootData);
-          }
-        }
-      });
-
-      // 3. Real-Time ESP8266 System Heartbeat Listener (/system)
-      this.db.ref('/system').on('value', (snapshot) => {
-        const sys = snapshot.val();
-        if (sys) {
-          this.handleSystemUpdate(sys);
+      // Fallback listener for legacy /slots path if needed
+      this.db.ref('/slots').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data && this.isLoading) {
+          this.isLoading = false;
+          this.hasError = false;
+          this.lastPacketTime = Date.now();
+          this.handleParkingUpdate(data);
         }
       });
 
     } catch (err) {
-      console.warn('Firebase init note:', err);
+      this.handleFirebaseError(err);
     }
   }
 
-  handleSlotsUpdate(data) {
-    this.slots.forEach(slot => {
-      const val = data[slot.id];
-      if (val !== undefined && val !== null) {
-        let isOccupied = false;
-        let updateTimestamp = null;
+  // Handle incoming live data from /parking
+  handleParkingUpdate(data) {
+    if (!data || typeof data !== 'object') return;
 
-        if (typeof val === 'object') {
-          isOccupied = Boolean(val.occupied);
-          updateTimestamp = val.lastUpdated || Date.now();
-        } else if (typeof val === 'boolean') {
-          isOccupied = val;
-        } else {
-          isOccupied = (val === 1 || val === '1' || val === true);
+    // 1. Available & Occupied counts from /parking/available and /parking/occupied
+    if (typeof data.available === 'number') {
+      this.availableCount = data.available;
+    } else if (data.available !== undefined && !isNaN(Number(data.available))) {
+      this.availableCount = Number(data.available);
+    }
+
+    if (typeof data.occupied === 'number') {
+      this.occupiedCount = data.occupied;
+    } else if (data.occupied !== undefined && !isNaN(Number(data.occupied))) {
+      this.occupiedCount = Number(data.occupied);
+    }
+
+    // 2. Map Firebase data to individual parking slots S01 - S04
+    this.slots.forEach(slot => {
+      const slotData = data[slot.id];
+      if (slotData !== undefined && slotData !== null) {
+        let isOccupied = false;
+        let sensorId = slot.sensor;
+        let sensorStat = slot.sensorStatus;
+
+        if (typeof slotData === 'object') {
+          // Schema: { status: "available" | "occupied", sensor: "IR1", sensorStatus: "normal" }
+          if (slotData.status) {
+            const normalized = String(slotData.status).toLowerCase().trim();
+            isOccupied = (normalized === 'occupied');
+          } else if (slotData.occupied !== undefined) {
+            isOccupied = Boolean(slotData.occupied);
+          }
+
+          if (slotData.sensor) {
+            sensorId = String(slotData.sensor);
+          }
+          if (slotData.sensorStatus) {
+            sensorStat = String(slotData.sensorStatus);
+          }
+        } else if (typeof slotData === 'string') {
+          isOccupied = (slotData.toLowerCase().trim() === 'occupied' || slotData === '1');
+        } else if (typeof slotData === 'number') {
+          isOccupied = (slotData === 1);
+        } else if (typeof slotData === 'boolean') {
+          isOccupied = slotData;
         }
 
+        // Detect state change to play acoustic chime
         if (slot.occupied !== isOccupied) {
           slot.occupied = isOccupied;
-          slot.lastUpdated = updateTimestamp || Date.now();
+          slot.status = isOccupied ? 'occupied' : 'available';
+          slot.lastUpdated = Date.now();
           this.playStatusSound(slot.occupied);
         }
+
+        slot.status = isOccupied ? 'occupied' : 'available';
+        slot.sensor = sensorId;
+        slot.sensorStatus = sensorStat;
       }
     });
 
     this.renderAll();
   }
 
-  handleSystemUpdate(sys) {
-    const now = Date.now();
-    let isLive = false;
-
-    if (sys.lastHeartbeat) {
-      this.lastHeartbeatEpoch = typeof sys.lastHeartbeat === 'number' 
-        ? sys.lastHeartbeat 
-        : new Date(sys.lastHeartbeat).getTime();
-
-      const diffSec = (now - this.lastHeartbeatEpoch) / 1000;
-      isLive = diffSec < 15;
-    } else if (sys.espOnline !== undefined) {
-      isLive = Boolean(sys.espOnline);
-    }
-
-    this.espOnline = isLive;
-
-    if (this.dom.heartbeatBadge) {
-      if (isLive) {
-        this.dom.heartbeatBadge.textContent = 'ESP8266: Online';
-        this.dom.heartbeatBadge.className = 'heartbeat-badge online';
-      } else {
-        this.dom.heartbeatBadge.textContent = 'ESP8266: Standby';
-        this.dom.heartbeatBadge.className = 'heartbeat-badge';
+  updateConnectionState(isConnected) {
+    if (isConnected) {
+      if (this.dom.systemPulse) this.dom.systemPulse.classList.remove('offline');
+      if (this.dom.systemStatusLabel) {
+        this.dom.systemStatusLabel.classList.remove('offline');
+        this.dom.systemStatusLabel.textContent = this.isLoading 
+          ? 'SYNCING LIVE DATA...' 
+          : 'FIREBASE CONNECTED • LIVE';
+      }
+      if (this.dom.latencyTag) {
+        this.dom.latencyTag.textContent = 'Firebase: Live Synchronized';
+      }
+    } else {
+      if (this.dom.systemPulse) this.dom.systemPulse.classList.add('offline');
+      if (this.dom.systemStatusLabel) {
+        this.dom.systemStatusLabel.classList.add('offline');
+        this.dom.systemStatusLabel.textContent = 'CONNECTING TO FIREBASE...';
+      }
+      if (this.dom.latencyTag) {
+        this.dom.latencyTag.textContent = 'Connecting to Cloud...';
       }
     }
   }
 
+  handleFirebaseError(error) {
+    console.warn('Firebase connection notice:', error);
+    this.hasError = true;
+    this.isLoading = false;
+
+    if (this.dom.systemPulse) {
+      this.dom.systemPulse.classList.add('offline');
+    }
+    if (this.dom.systemStatusLabel) {
+      this.dom.systemStatusLabel.classList.add('offline');
+      this.dom.systemStatusLabel.textContent = 'FIREBASE OFFLINE';
+    }
+    if (this.dom.latencyTag) {
+      this.dom.latencyTag.textContent = 'Connection notice - Retrying';
+    }
+    if (this.dom.heartbeatBadge) {
+      this.dom.heartbeatBadge.textContent = 'ESP8266: Standby';
+      this.dom.heartbeatBadge.className = 'heartbeat-badge';
+    }
+
+    this.renderAll();
+  }
+
   forceSync() {
-    this.lastPacketTime = Date.now();
+    if (this.dom.manualRefreshBtn) {
+      const btn = this.dom.manualRefreshBtn;
+      btn.style.opacity = '0.6';
+      setTimeout(() => { if (btn) btn.style.opacity = '1'; }, 600);
+    }
+
     if (this.db) {
-      this.db.ref('/slots').once('value').then(snap => {
+      this.db.ref('/parking').once('value').then(snap => {
         const val = snap.val();
-        if (val) this.handleSlotsUpdate(val);
-      }).catch(err => console.warn('Manual fetch notice:', err));
+        if (val) {
+          this.isLoading = false;
+          this.hasError = false;
+          this.lastPacketTime = Date.now();
+          this.handleParkingUpdate(val);
+        }
+      }).catch(err => {
+        this.handleFirebaseError(err);
+      });
     }
     this.renderAll();
   }
@@ -332,23 +389,42 @@ class SlotixFirebaseApp {
   updateHeartbeatDisplay() {
     if (!this.dom.lastUpdatedLabel) return;
 
+    if (this.isLoading && !this.lastPacketTime) {
+      this.dom.lastUpdatedLabel.textContent = 'Sync: Connecting...';
+      if (this.dom.heartbeatBadge) {
+        this.dom.heartbeatBadge.textContent = 'ESP8266: Connecting';
+        this.dom.heartbeatBadge.className = 'heartbeat-badge';
+      }
+      return;
+    }
+
     if (!this.lastPacketTime) {
-      this.dom.lastUpdatedLabel.textContent = 'Sync: 4374s ago';
+      this.dom.lastUpdatedLabel.textContent = 'Sync: Awaiting data';
+      if (this.dom.heartbeatBadge) {
+        this.dom.heartbeatBadge.textContent = 'ESP8266: Standby';
+        this.dom.heartbeatBadge.className = 'heartbeat-badge';
+      }
       return;
     }
 
     const elapsedSec = Math.floor((Date.now() - this.lastPacketTime) / 1000);
     this.dom.lastUpdatedLabel.textContent = `Sync: ${elapsedSec}s ago`;
 
-    // Check ESP8266 timeout
-    if (this.lastHeartbeatEpoch) {
-      const espDiff = Math.floor((Date.now() - this.lastHeartbeatEpoch) / 1000);
-      if (espDiff > 15 && this.espOnline) {
-        this.espOnline = false;
-        if (this.dom.heartbeatBadge) {
-          this.dom.heartbeatBadge.textContent = 'ESP8266: Standby';
-          this.dom.heartbeatBadge.className = 'heartbeat-badge';
-        }
+    // ESP8266 updates approximately every 1 second:
+    // When live updates are arriving:
+    const isLive = elapsedSec <= 10;
+    this.espOnline = isLive;
+
+    if (this.dom.heartbeatBadge) {
+      if (isLive) {
+        this.dom.heartbeatBadge.textContent = 'ESP8266: Online';
+        this.dom.heartbeatBadge.className = 'heartbeat-badge online';
+      } else if (elapsedSec <= 30) {
+        this.dom.heartbeatBadge.textContent = 'ESP8266: Idle';
+        this.dom.heartbeatBadge.className = 'heartbeat-badge';
+      } else {
+        this.dom.heartbeatBadge.textContent = 'ESP8266: Standby';
+        this.dom.heartbeatBadge.className = 'heartbeat-badge';
       }
     }
   }
@@ -359,12 +435,37 @@ class SlotixFirebaseApp {
   }
 
   renderMetrics() {
-    const total = this.slots.length;
-    const occupied = this.slots.filter(s => s.occupied).length;
-    const available = total - occupied;
+    const total = this.totalSlots;
+    const computedOccupied = this.slots.filter(s => s.occupied).length;
+    const computedAvailable = total - computedOccupied;
 
-    const availablePercent = Math.round((available / total) * 100);
-    const occupiedPercent = Math.round((occupied / total) * 100);
+    const available = (typeof this.availableCount === 'number') 
+      ? this.availableCount 
+      : computedAvailable;
+
+    const occupied = (typeof this.occupiedCount === 'number') 
+      ? this.occupiedCount 
+      : computedOccupied;
+
+    if (this.isLoading) {
+      if (this.dom.metricTotal) this.dom.metricTotal.textContent = total;
+      if (this.dom.metricAvailable) this.dom.metricAvailable.textContent = '...';
+      if (this.dom.metricOccupied) this.dom.metricOccupied.textContent = '...';
+      if (this.dom.metricAvailablePercent) {
+        this.dom.metricAvailablePercent.textContent = 'Syncing capacity...';
+      }
+      if (this.dom.metricOccupiedPercent) {
+        this.dom.metricOccupiedPercent.textContent = 'Connecting to sensors...';
+      }
+      if (this.dom.lotStatusPill) {
+        this.dom.lotStatusPill.textContent = 'SYNCING...';
+        this.dom.lotStatusPill.className = 'lot-status-pill';
+      }
+      return;
+    }
+
+    const availablePercent = total > 0 ? Math.round((available / total) * 100) : 0;
+    const occupiedPercent = total > 0 ? Math.round((occupied / total) * 100) : 0;
 
     if (this.dom.metricTotal) this.dom.metricTotal.textContent = total;
     if (this.dom.metricAvailable) this.dom.metricAvailable.textContent = available;
@@ -393,7 +494,18 @@ class SlotixFirebaseApp {
       const bay = document.getElementById(`bay-${slot.id}`);
       const tag = document.getElementById(`bayTag-${slot.id}`);
       const visualLabel = document.getElementById(`bayVisualLabel-${slot.id}`);
+      const sensorBadge = document.getElementById(`baySensor-${slot.id}`);
+
       if (!bay || !tag) return;
+
+      bay.setAttribute('title', `${slot.name} (${slot.id}): ${slot.status.toUpperCase()}`);
+
+      if (this.isLoading) {
+        if (visualLabel) visualLabel.textContent = 'SYNCING...';
+        tag.textContent = 'CONNECTING';
+        if (sensorBadge) sensorBadge.textContent = `${slot.sensor || 'IR'}: ...`;
+        return;
+      }
 
       if (slot.occupied) {
         bay.classList.remove('available');
@@ -405,6 +517,13 @@ class SlotixFirebaseApp {
         bay.classList.add('available');
         tag.textContent = 'AVAILABLE';
         if (visualLabel) visualLabel.textContent = 'VACANT';
+      }
+
+      // Update sensor status where the existing UI supports it
+      if (sensorBadge) {
+        const sensorText = slot.sensor ? `${slot.sensor} • ${(slot.sensorStatus || 'normal').toUpperCase()}` : `IR • ${(slot.sensorStatus || 'normal').toUpperCase()}`;
+        sensorBadge.textContent = sensorText;
+        sensorBadge.title = `Sensor: ${slot.sensor || 'IR'} | Status: ${slot.sensorStatus || 'normal'} | ${slot.name}`;
       }
     });
   }

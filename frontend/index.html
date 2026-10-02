@@ -23,7 +23,7 @@
   <!-- Firebase Web SDK (v10 Compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-  <script src="firebase-config.js?v=8"></script>
+  <script src="firebase-config.js?v=9"></script>
 </head>
 <body>
   <div class="dashboard-wrapper">
@@ -96,10 +96,10 @@
       <div class="system-status-ribbon">
         <div class="status-indicator-group">
           <span class="status-pulse-dot" id="systemPulse"></span>
-          <span class="status-text" id="systemStatusLabel">FIREBASE CLOUD LIVE</span>
+          <span class="status-text" id="systemStatusLabel">CONNECTING TO FIREBASE...</span>
         </div>
         <div class="status-meta">
-          <span class="sensor-sync-label" id="lastUpdatedLabel">Sync: 4374s ago</span>
+          <span class="sensor-sync-label" id="lastUpdatedLabel">Sync: Connecting...</span>
           <span class="heartbeat-badge" id="heartbeatBadge">ESP8266: Standby</span>
         </div>
       </div>
@@ -191,7 +191,7 @@
             <div class="parking-bay available" id="bay-S01" data-slot="S01">
               <div class="bay-header">
                 <span class="bay-code">S01</span>
-                <span class="bay-sensor-badge" id="baySensor-S01">IR-01 (D1)</span>
+                <span class="bay-sensor-badge" id="baySensor-S01">IR1 • NORMAL</span>
               </div>
               <div class="bay-visual">
                 <div class="p-symbol-ring">
@@ -208,7 +208,7 @@
             <div class="parking-bay available" id="bay-S02" data-slot="S02">
               <div class="bay-header">
                 <span class="bay-code">S02</span>
-                <span class="bay-sensor-badge" id="baySensor-S02">IR-02 (D2)</span>
+                <span class="bay-sensor-badge" id="baySensor-S02">IR2 • NORMAL</span>
               </div>
               <div class="bay-visual">
                 <div class="p-symbol-ring">
@@ -225,7 +225,7 @@
             <div class="parking-bay available" id="bay-S03" data-slot="S03">
               <div class="bay-header">
                 <span class="bay-code">S03</span>
-                <span class="bay-sensor-badge" id="baySensor-S03">IR-03 (D5)</span>
+                <span class="bay-sensor-badge" id="baySensor-S03">IR3 • NORMAL</span>
               </div>
               <div class="bay-visual">
                 <div class="p-symbol-ring">
@@ -242,7 +242,7 @@
             <div class="parking-bay available" id="bay-S04" data-slot="S04">
               <div class="bay-header">
                 <span class="bay-code">S04</span>
-                <span class="bay-sensor-badge" id="baySensor-S04">IR-04 (D6)</span>
+                <span class="bay-sensor-badge" id="baySensor-S04">IR4 • NORMAL</span>
               </div>
               <div class="bay-visual">
                 <div class="p-symbol-ring">
@@ -361,6 +361,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=9"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>
