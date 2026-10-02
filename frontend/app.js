@@ -4,6 +4,26 @@
  * Architecture: IR Sensors → ESP8266 → Wi-Fi → Firebase Realtime Database → Slotix Dashboard
  */
 
+// Modular Firebase Database helpers (ref & onValue)
+function ref(database, path = '') {
+  const dbInstance = database || (typeof firebase !== 'undefined' ? firebase.database() : null);
+  if (!dbInstance) throw new Error('Firebase Database instance not initialized');
+  return dbInstance.ref(path ? String(path).replace(/^\/+/, '') : '');
+}
+
+function onValue(reference, callback, errorCallback) {
+  if (!reference || typeof reference.on !== 'function') {
+    throw new Error('Invalid Firebase reference passed to onValue');
+  }
+  return reference.on('value', callback, errorCallback);
+}
+
+// Expose globally for console testing
+if (typeof window !== 'undefined') {
+  window.ref = ref;
+  window.onValue = onValue;
+}
+
 class SlotixFirebaseApp {
   constructor() {
     // S01-S04 Parking Slot Mappings
@@ -206,19 +226,30 @@ class SlotixFirebaseApp {
       }
 
       this.db = firebase.database();
+      if (typeof window !== 'undefined') {
+        window.database = this.db;
+      }
 
       // 1. Monitor Firebase Web Client Connectivity (.info/connected)
-      this.db.ref('.info/connected').on('value', (snap) => {
+      const connectedRef = ref(this.db, '.info/connected');
+      onValue(connectedRef, (snap) => {
         const isConnected = Boolean(snap.val());
         this.firebaseConnected = isConnected;
         this.updateConnectionState(isConnected);
       });
 
-      // 2. Real-Time Telemetry Listener (/parking)
-      // NodeMCU ESP8266 writes live slot data to /parking every ~1s
-      this.parkingRef = this.db.ref('/parking');
-      this.parkingRef.on('value', (snapshot) => {
+      // 2. Real-Time Telemetry Listener (ref(database, "parking"))
+      const parkingRef = ref(this.db, "parking");
+      this.parkingRef = parkingRef;
+      if (typeof window !== 'undefined') {
+        window.parkingRef = parkingRef;
+      }
+
+      onValue(parkingRef, (snapshot) => {
         const data = snapshot.val();
+
+        console.log("Live parking data:", data);
+
         this.isLoading = false;
         this.hasError = false;
         if (data) {
@@ -230,7 +261,8 @@ class SlotixFirebaseApp {
       });
 
       // Fallback listener for legacy /slots path if needed
-      this.db.ref('/slots').on('value', (snapshot) => {
+      const legacySlotsRef = ref(this.db, "slots");
+      onValue(legacySlotsRef, (snapshot) => {
         const data = snapshot.val();
         if (data && this.isLoading) {
           this.isLoading = false;
@@ -260,6 +292,15 @@ class SlotixFirebaseApp {
       this.occupiedCount = data.occupied;
     } else if (data.occupied !== undefined && !isNaN(Number(data.occupied))) {
       this.occupiedCount = Number(data.occupied);
+    }
+
+    // Check if ESP8266 sent explicit status flag
+    if (data.esp8266Status === 'ESP8266_CONNECTED' || data.esp8266Status === 'online') {
+      this.espOnline = true;
+      if (this.dom.heartbeatBadge) {
+        this.dom.heartbeatBadge.textContent = 'ESP8266: Online';
+        this.dom.heartbeatBadge.className = 'heartbeat-badge online';
+      }
     }
 
     // 2. Map Firebase data to individual parking slots S01 - S04
