@@ -28,8 +28,10 @@ class SlotixFirebaseApp {
   }
 
   init() {
+    this.ADMIN_EMAIL = 'gaikwadpruthvi200@gmail.com';
     this.cacheDom();
     this.applyTheme(this.theme);
+    this.setupAdminView();
     this.bindEvents();
     this.registerPWA();
     this.renderAll();
@@ -63,7 +65,14 @@ class SlotixFirebaseApp {
       cfgDatabaseUrl: document.getElementById('cfgDatabaseUrl'),
       cfgApiKey: document.getElementById('cfgApiKey'),
       cfgProjectId: document.getElementById('cfgProjectId'),
-      manualRefreshBtn: document.getElementById('manualRefreshBtn')
+      manualRefreshBtn: document.getElementById('manualRefreshBtn'),
+      headerAdminBadge: document.getElementById('headerAdminBadge'),
+      userRoleBadge: document.getElementById('userRoleBadge'),
+      currentAccountEmail: document.getElementById('currentAccountEmail'),
+      currentAccountRole: document.getElementById('currentAccountRole'),
+      adminSettingsSection: document.getElementById('adminSettingsSection'),
+      userRestrictedNotice: document.getElementById('userRestrictedNotice'),
+      modalTitle: document.getElementById('modalTitle')
     };
   }
 
@@ -454,10 +463,70 @@ class SlotixFirebaseApp {
     }
   }
 
+  isAdmin() {
+    const currentUser = (localStorage.getItem('slotix_current_user') || '').toLowerCase().trim();
+    const isAdminFlag = localStorage.getItem('slotix_is_admin') === 'true';
+    return currentUser === 'gaikwadpruthvi200@gmail.com' || isAdminFlag;
+  }
+
+  setupAdminView() {
+    const isAdmin = this.isAdmin();
+    const currentUser = localStorage.getItem('slotix_current_user') || (isAdmin ? 'gaikwadpruthvi200@gmail.com' : 'Guest User');
+
+    // Header badge
+    if (this.dom.headerAdminBadge) {
+      if (isAdmin) {
+        this.dom.headerAdminBadge.classList.remove('hidden');
+      } else {
+        this.dom.headerAdminBadge.classList.add('hidden');
+      }
+    }
+
+    // Modal account details
+    if (this.dom.currentAccountEmail) {
+      this.dom.currentAccountEmail.textContent = currentUser;
+    }
+
+    if (this.dom.currentAccountRole) {
+      this.dom.currentAccountRole.textContent = isAdmin 
+        ? 'Administrator (Full Hardware & Cloud Access)' 
+        : 'Standard User (Monitoring Access)';
+    }
+
+    if (this.dom.userRoleBadge) {
+      this.dom.userRoleBadge.textContent = isAdmin ? 'ADMIN' : 'USER';
+      this.dom.userRoleBadge.className = isAdmin ? 'user-role-badge admin' : 'user-role-badge user';
+    }
+
+    if (this.dom.modalTitle) {
+      this.dom.modalTitle.textContent = isAdmin ? 'Firebase & Hardware Setup' : 'Account & System Info';
+    }
+
+    // Admin vs restricted sections
+    if (this.dom.adminSettingsSection) {
+      if (isAdmin) {
+        this.dom.adminSettingsSection.classList.remove('hidden');
+      } else {
+        this.dom.adminSettingsSection.classList.add('hidden');
+      }
+    }
+
+    if (this.dom.userRestrictedNotice) {
+      if (isAdmin) {
+        this.dom.userRestrictedNotice.classList.add('hidden');
+      } else {
+        this.dom.userRestrictedNotice.classList.remove('hidden');
+      }
+    }
+  }
+
   openSettings() {
-    if (this.dom.cfgDatabaseUrl) this.dom.cfgDatabaseUrl.value = this.config.databaseURL || '';
-    if (this.dom.cfgApiKey) this.dom.cfgApiKey.value = this.config.apiKey || '';
-    if (this.dom.cfgProjectId) this.dom.cfgProjectId.value = this.config.projectId || '';
+    this.setupAdminView();
+    if (this.isAdmin()) {
+      if (this.dom.cfgDatabaseUrl) this.dom.cfgDatabaseUrl.value = this.config.databaseURL || '';
+      if (this.dom.cfgApiKey) this.dom.cfgApiKey.value = this.config.apiKey || '';
+      if (this.dom.cfgProjectId) this.dom.cfgProjectId.value = this.config.projectId || '';
+    }
     if (this.dom.settingsModal) this.dom.settingsModal.classList.remove('hidden');
   }
 
@@ -466,6 +535,11 @@ class SlotixFirebaseApp {
   }
 
   handleSaveFirebaseConfig() {
+    if (!this.isAdmin()) {
+      alert('Access Denied: Only administrator (gaikwadpruthvi200@gmail.com) can modify Firebase configuration.');
+      return;
+    }
+
     const dbUrl = this.dom.cfgDatabaseUrl ? this.dom.cfgDatabaseUrl.value.trim() : '';
     const apiKey = this.dom.cfgApiKey ? this.dom.cfgApiKey.value.trim() : '';
     const projId = this.dom.cfgProjectId ? this.dom.cfgProjectId.value.trim() : '';

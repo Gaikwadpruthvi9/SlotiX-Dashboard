@@ -93,18 +93,31 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   // 1. User Credential Store in LocalStorage
   // ==========================================
+  const ADMIN_EMAIL = 'gaikwadpruthvi200@gmail.com';
+  const ADMIN_DEFAULT_PASS = '12345678';
+
   function getUserAccounts() {
     try {
       const data = localStorage.getItem('slotix_user_accounts');
       if (data) {
-        return JSON.parse(data);
+        const parsed = JSON.parse(data);
+        if (!parsed[ADMIN_EMAIL.toLowerCase()]) {
+          parsed[ADMIN_EMAIL.toLowerCase()] = ADMIN_DEFAULT_PASS;
+          localStorage.setItem('slotix_user_accounts', JSON.stringify(parsed));
+        }
+        return parsed;
       }
     } catch (_) {}
-    // Seed default accounts
-    return {
-      'admin@slotix.com': 'admin123',
+    // Seed default accounts with Master Admin
+    const initial = {
+      [ADMIN_EMAIL.toLowerCase()]: ADMIN_DEFAULT_PASS,
+      'admin@slotix.com': '12345678',
       'demo@slotix.com': 'slotix2026'
     };
+    try {
+      localStorage.setItem('slotix_user_accounts', JSON.stringify(initial));
+    } catch (_) {}
+    return initial;
   }
 
   function saveUserAccount(email, password) {
@@ -228,12 +241,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // 4. Remember Me Pre-fill
   // ==========================================
   const savedUser = localStorage.getItem('slotix_remember_user');
-  if (savedUser && usernameInput) {
-    usernameInput.value = savedUser;
-    if (isValidEmail(savedUser)) {
+  if (usernameInput) {
+    if (savedUser) {
+      usernameInput.value = savedUser;
+      if (isValidEmail(savedUser)) usernameInput.classList.add('input-valid');
+      if (rememberMeCheckbox) rememberMeCheckbox.checked = true;
+    } else {
+      // Default convenience pre-fill for admin testing
+      usernameInput.value = ADMIN_EMAIL;
       usernameInput.classList.add('input-valid');
     }
-    if (rememberMeCheckbox) rememberMeCheckbox.checked = true;
   }
 
   // ==========================================
@@ -776,9 +793,11 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('slotix_remember_user');
       }
 
-      // 5. Set session flags
+      // 5. Set session flags and admin role
+      const isAdmin = normalizedEmail === ADMIN_EMAIL.toLowerCase();
       localStorage.setItem('slotix_logged_in', 'true');
       localStorage.setItem('slotix_current_user', email);
+      localStorage.setItem('slotix_is_admin', isAdmin ? 'true' : 'false');
 
       // 6. UI feedback and redirect
       if (signInBtn) {
